@@ -1,11 +1,11 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
-	"version": "1.0.0",
+	"id": "model-runner",
+	"name": "Model Runner",
+	"version": "0.1.0",
 	"minAppVersion": "1.0.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
-	"isDesktopOnly": false
+	"description": "在 Obsidian 内启动和管理 Model Runner 服务器，统一管理多个 AI 模型 API 源",
+	"author": "Your Name",
+	"authorUrl": "https://github.com/yourname",
+	"fundingUrl": "",
+	"isDesktopOnly": true
 }

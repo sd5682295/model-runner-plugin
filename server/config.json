@@ -1,0 +1,322 @@
+{
+  "sources": [
+    {
+      "id": "yunyi",
+      "name": "云驿",
+      "baseUrl": "https://yunyi.yun/claude/v1",
+      "apiKeys": [
+        "N1HKX3SR-QM5J-DHFC-AJQU-JS78VNMHCYVT"
+      ]
+    },
+    {
+      "id": "ceotech",
+      "name": "伟业科技",
+      "baseUrl": "https://claude.api.ceo-tech.cn/v1",
+      "apiKeys": [
+        "sk-9b36ccf10ce5410a51507b6bfecd9f4330e11ef09de2ae20d21f8a522e78e274"
+      ]
+    },
+    {
+      "id": "mytokenland",
+      "name": "算力岛",
+      "baseUrl": "https://api.mytokenland.com/v1",
+      "apiKeys": [
+        "sk-GihBgqvCtIfxJ1MZsZ7tuGmuKBt0PDktCVRaBFZqGj3MjaV8"
+      ]
+    }
+  ],
+  "activeSourceId": "yunyi",
+  "modelRoutes": {
+    "claude-opus-4-8": {
+      "preferredPlatforms": [
+        "yunyi",
+        "ceotech",
+        "mytokenland"
+      ],
+      "disabledPlatforms": []
+    },
+    "gpt-5.5": {
+      "preferredPlatforms": [
+        "mytokenland",
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "claude-opus-4-7": {
+      "preferredPlatforms": [
+        "ceotech",
+        "mytokenland",
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "claude-haiku-4-5": {
+      "preferredPlatforms": [
+        "ceotech",
+        "mytokenland",
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "claude-haiku-4-5-20251001": {
+      "preferredPlatforms": [
+        "ceotech",
+        "mytokenland",
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "claude-opus-4-6": {
+      "preferredPlatforms": [
+        "ceotech",
+        "mytokenland",
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "claude-opus-4-6-20260206": {
+      "preferredPlatforms": [
+        "ceotech",
+        "mytokenland",
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "claude-opus-4-6-thinking": {
+      "preferredPlatforms": [
+        "ceotech",
+        "mytokenland",
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "claude-sonnet-4-6": {
+      "preferredPlatforms": [
+        "mytokenland",
+        "ceotech"
+      ],
+      "disabledPlatforms": [],
+      "platforms": [
+        {
+          "sourceId": "mytokenland",
+          "health": "unknown"
+        }
+      ],
+      "preferred": [
+        "mytokenland"
+      ],
+      "disabled": []
+    },
+    "claude-sonnet-4-6-thinking": {
+      "preferredPlatforms": [
+        "ceotech",
+        "mytokenland",
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "claude-sonnet-4-7": {
+      "preferredPlatforms": [
+        "ceotech",
+        "mytokenland",
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "deepseek-v3.2": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "deepseek-v4-flash": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "deepseek-v4-pro": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "doubao-seed-2.0-code": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "doubao-seed-2.0-lite": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "doubao-seed-2.0-pro": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "gemini-3.1-pro": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "glm-4.7": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "glm-5.1": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "gpt-5.3-codex": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "gpt-5.3-codex-spark": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "gpt-5.4": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "gpt-5.4-mini": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "gpt-image-2": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "K2.6-code-preview": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "kimi-2.5": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "kimi-for-coding": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "kimi-k2.5": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "kimi-k2.6": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "mimo-v2-omni": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "mimo-v2-pro": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "mimo-v2.5": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "MiniMax-M2.7": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "MiniMax-M2.7-highspeed": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "qwen3-coder-plus": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "qwen3.5-plus": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "qwen3.6-plus": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "claude": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "claude-3-5-haiku-20241022": {
+      "preferredPlatforms": [
+        "ceotech"
+      ],
+      "disabledPlatforms": []
+    },
+    "claude-opus-4-5-20251101": {
+      "preferredPlatforms": [
+        "ceotech"
+      ],
+      "disabledPlatforms": []
+    },
+    "claude-sonnet-4-20250514": {
+      "preferredPlatforms": [
+        "ceotech"
+      ],
+      "disabledPlatforms": []
+    },
+    "claude-sonnet-4-5-20250929": {
+      "preferredPlatforms": [
+        "ceotech"
+      ],
+      "disabledPlatforms": []
+    }
+  },
+  "timeout": 120000,
+  "retries": 2,
+  "promptDir": "D:\\work\\笔记1\\prompt"
+}

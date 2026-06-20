@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Model Runner</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/styles/atom-one-dark.min.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0d14;
+  --bg-soft: #111722;
+  --panel: rgba(18, 24, 34, 0.78);
+  --panel-strong: rgba(22, 29, 42, 0.94);
+  --panel-soft: rgba(255, 255, 255, 0.045);
+  --line: rgba(215, 226, 242, 0.11);
+  --line-strong: rgba(215, 226, 242, 0.18);
+  --text: #eef3f8;
+  --muted: #9aa8b9;
+  --muted-2: #687789;
+  --brand: #b79a68;
+  --brand-2: #86b6c5;
+  --brand-3: #8f7ad9;
+  --ok: #74d0a3;
+  --err: #e68a94;
+  --radius-lg: 28px;
+  --radius-md: 18px;
+  --shadow: 0 30px 90px rgba(0, 0, 0, 0.34);
+  --shadow-soft: 0 18px 50px rgba(0, 0, 0, 0.22);
+}
+body {
+  font-family: Inter, ui-sans-serif, 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background:
+    radial-gradient(circle at 16% -12%, rgba(183,154,104,.24), transparent 34%),
+    radial-gradient(circle at 88% 6%, rgba(134,182,197,.20), transparent 30%),
+    radial-gradient(circle at 68% 118%, rgba(143,122,217,.16), transparent 34%),
+    linear-gradient(145deg, #080b11 0%, #0d121b 42%, #080b11 100%);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  letter-spacing: .005em;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,.72), transparent 78%);
+}
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at center, transparent 0, rgba(0,0,0,.28) 100%);
+}
+
+/* ── Topbar ── */
+#topbar {
+  margin: 18px 20px 0;
+  background: linear-gradient(135deg, rgba(22,29,42,.82), rgba(14,18,27,.64));
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 10px 12px 10px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255,255,255,.07);
+  backdrop-filter: blur(26px) saturate(125%);
+  position: relative;
+  z-index: 2;
+}
+#topbar h1 {
+  font-size: 15px;
+  font-weight: 720;
+  color: #fffaf0;
+  white-space: nowrap;
+  letter-spacing: .04em;
+}
+#topbar h1::after {
+  content: 'AI Console';
+  margin-left: 9px;
+  padding-left: 10px;
+  border-left: 1px solid var(--line-strong);
+  color: var(--muted-2);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.tb-group { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.035); }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: #667386; flex-shrink: 0; box-shadow: 0 0 16px currentColor; }
+.dot.ok { background: var(--ok); }
+.dot.err { background: var(--err); }
+
+/* ── Controls ── */
+input[type=text], input[type=password], input[type=number], textarea, select {
+  background: rgba(6, 10, 17, .62); border: 1px solid var(--line); border-radius: 14px;
+  color: var(--text); padding: 9px 12px; font-size: 13px; outline: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.045);
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+input::placeholder, textarea::placeholder { color: rgba(154,168,185,.56); }
+input:focus, textarea:focus, select:focus { border-color: rgba(183,154,104,.72); box-shadow: 0 0 0 4px rgba(183,154,104,.12), inset 0 1px 0 rgba(255,255,255,.06); background: rgba(8,12,20,.78); }
+button {
+  background: linear-gradient(135deg, #c3a66f, #8c744b); color: #15110a; border: 1px solid rgba(255,255,255,.12); border-radius: 14px;
+  padding: 8px 14px; font-size: 13px; font-weight: 650; cursor: pointer; white-space: nowrap;
+  box-shadow: 0 14px 34px rgba(183,154,104,.18), inset 0 1px 0 rgba(255,255,255,.28);
+  transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
+}
+button:hover { transform: translateY(-1px); border-color: rgba(255,255,255,.24); box-shadow: 0 18px 42px rgba(183,154,104,.22), inset 0 1px 0 rgba(255,255,255,.34); }
+button.secondary { background: rgba(255,255,255,.045); border: 1px solid var(--line); color: #c6d0dc; box-shadow: inset 0 1px 0 rgba(255,255,255,.045); }
+button.secondary:hover { background: rgba(255,255,255,.075); color: #fffaf0; border-color: var(--line-strong); box-shadow: inset 0 1px 0 rgba(255,255,255,.07); }
+
+/* ── Tab nav ── */
+.tab-nav { display: flex; gap: 4px; padding: 3px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.035); }
+.tab-btn {
+  background: transparent; color: var(--muted); border: 1px solid transparent;
+  border-radius: 999px; padding: 6px 12px; font-size: 12px; cursor: pointer; box-shadow: none;
+}
+.tab-btn:hover { color: #f2f6fb; background: rgba(255,255,255,.055); box-shadow: none; }
+.tab-btn.active { color: #15110a; background: linear-gradient(135deg, #d7bf8b, #a88d5a); border-color: rgba(255,255,255,.16); box-shadow: 0 10px 28px rgba(183,154,104,.18); }
+
+/* ── Panels ── */
+.tab-panel { display: none; flex: 1; overflow: hidden; }
+.tab-panel.active { display: flex; }
+
+/* ── Layout ── */
+#main { display: flex; flex: 1; overflow: hidden; padding: 16px 20px 20px; gap: 14px; position: relative; z-index: 1; }
+#chat-panel { display: flex; flex-direction: column; overflow: hidden; }
+#chat-panel.chat-tab { display: flex; }
+#chat-panel:not(.chat-tab) { display: none; }
+
+/* ── Sessions panel ── */
+#sess-panel {
+  width: 230px; flex-shrink: 0;
+  background: linear-gradient(180deg, rgba(22,29,42,.80), rgba(12,16,24,.70));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  display: flex; flex-direction: column; padding: 16px; gap: 10px;
+  overflow: hidden; transition: width 0.2s, padding 0.2s, opacity 0.15s;
+  backdrop-filter: blur(24px) saturate(120%);
+  box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255,255,255,.055);
+}
+#sess-panel.hidden { width: 0; padding: 0; opacity: 0; }
+.sess-header { display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+#sess-list { list-style: none; flex: 1; overflow-y: auto; margin-top: 4px; padding-right: 2px; }
+.sess-item {
+  padding: 9px 10px; border-radius: 14px; cursor: pointer;
+  position: relative; margin-bottom: 5px; border: 1px solid transparent;
+  transition: background .16s ease, border-color .16s ease, transform .16s ease;
+}
+.sess-item:hover { background: rgba(255,255,255,.055); border-color: var(--line); transform: translateX(1px); }
+.sess-item.active { background: linear-gradient(135deg, rgba(183,154,104,.18), rgba(134,182,197,.10)); border-color: rgba(183,154,104,.30); }
+.sess-name { font-size: 12px; color: #f3dfb5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+.sess-meta { font-size: 10px; color: var(--muted-2); margin-top: 4px; }
+.sess-del {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  background: transparent; border: none; color: var(--muted-2); font-size: 16px; line-height: 1;
+  cursor: pointer; padding: 1px 4px; opacity: 0; box-shadow: none;
+}
+.sess-item:hover .sess-del { opacity: 1; }
+.sess-del:hover { color: #ffb4ba; background: transparent; box-shadow: none; }
+.sess-empty { font-size: 12px; color: var(--muted-2); padding: 8px 4px; }
+
+/* ── Sidebar ── */
+#sidebar { width: 326px; background: linear-gradient(180deg, rgba(22,29,42,.80), rgba(12,16,24,.70)); border: 1px solid var(--line); border-radius: var(--radius-lg); display: flex; flex-direction: column; padding: 16px; gap: 14px; overflow-y: auto; flex-shrink: 0; backdrop-filter: blur(24px) saturate(120%); box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255,255,255,.055); }
+.section-title { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.16em; margin-bottom: 8px; font-weight: 750; }
+#model-search { width: 100%; margin-bottom: 9px; }
+#model-list { list-style: none; max-height: 270px; overflow-y: auto; border: 1px solid var(--line); border-radius: 20px; background: rgba(3,7,13,.30); padding: 6px; }
+#model-list li { padding: 10px 11px; font-size: 12px; cursor: pointer; border: 1px solid transparent; border-radius: 15px; line-height: 1.45; margin-bottom: 5px; transition: background .16s ease, border-color .16s ease, transform .16s ease; }
+#model-list li:last-child { margin-bottom: 0; }
+#model-list li:hover { background: rgba(183,154,104,.09); border-color: rgba(183,154,104,.22); transform: translateY(-1px); }
+#model-list li.selected { background: linear-gradient(135deg, rgba(183,154,104,.24), rgba(134,182,197,.13)); color: #fff; border-color: rgba(183,154,104,.42); box-shadow: 0 14px 34px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.08); }
+#model-list li.loading { color: var(--muted-2); cursor: default; }
+.model-card-title { font-weight: 720; color: #fbf7ef; word-break: break-all; }
+.model-card-meta { font-size: 10px; color: var(--muted); margin-top: 6px; display: flex; gap: 6px; flex-wrap: wrap; }
+.model-pill { padding: 2px 8px; border-radius: 999px; background: rgba(255,255,255,.045); border: 1px solid var(--line); }
+#selected-model { font-size: 12px; color: #f3dfb5; padding: 8px 10px; min-height: 18px; word-break: break-all; border: 1px solid var(--line); border-radius: 15px; background: rgba(255,255,255,.04); }
+#system-prompt { width: 100%; height: 96px; resize: vertical; font-size: 12px; line-height: 1.6; }
+.param-row { display: flex; align-items: center; gap: 8px; }
+.param-row label { font-size: 12px; color: var(--muted); flex: 1; }
+.param-row input[type=number] { width: 78px; background: rgba(6,10,17,.62); border: 1px solid var(--line); border-radius: 12px; color: var(--text); padding: 6px 8px; font-size: 12px; }
+.param-row input[type=range] { flex: 1; accent-color: var(--brand); }
+.param-row span { font-size: 12px; color: #f3dfb5; width: 36px; }
+
+/* ── Chat area ── */
+#chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: linear-gradient(180deg, rgba(22,29,42,.76), rgba(9,12,18,.74)); border: 1px solid var(--line); border-radius: 30px; backdrop-filter: blur(24px) saturate(120%); box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.055); }
+#messages { flex: 1; overflow-y: auto; padding: 26px; display: flex; flex-direction: column; gap: 16px; }
+
+/* ── Messages ── */
+.msg { display: flex; flex-direction: column; gap: 6px; max-width: min(900px, 86%); position: relative; }
+.msg.user { align-self: flex-end; }
+.msg.assistant { align-self: flex-start; }
+.msg-role { font-size: 11px; color: var(--muted); padding: 0 6px; letter-spacing: .04em; }
+.msg.user .msg-role { text-align: right; }
+.msg-body {
+  background: rgba(255,255,255,.055); border: 1px solid var(--line); border-radius: 22px; padding: 14px 17px;
+  font-size: 14px; line-height: 1.78; word-break: break-word;
+  box-shadow: 0 14px 42px rgba(0,0,0,.20), inset 0 1px 0 rgba(255,255,255,.045);
+}
+.msg.user .msg-body { background: linear-gradient(135deg, rgba(197,169,113,.92), rgba(133,107,65,.88)); color: #15110a; white-space: pre-wrap; border-color: rgba(255,255,255,.16); box-shadow: 0 18px 46px rgba(183,154,104,.18); }
+.msg.error .msg-body { background: rgba(112,32,40,.72); color: #ffd6da; white-space: pre-wrap; border-color: rgba(230,138,148,.35); }
+.msg-meta { font-size: 10px; color: var(--muted-2); padding: 0 6px; }
+.streaming { white-space: pre-wrap; }
+
+/* ── Markdown styles ── */
+.md-body { white-space: normal; }
+.md-body p { margin: 6px 0; }
+.md-body p:first-child { margin-top: 0; }
+.md-body p:last-child { margin-bottom: 0; }
+.md-body ul, .md-body ol { padding-left: 24px; margin: 8px 0; }
+.md-body li { margin: 3px 0; }
+.md-body h1, .md-body h2, .md-body h3 { margin: 14px 0 7px; color: #fbf7ef; font-weight: 720; }
+.md-body h1 { font-size: 19px; } .md-body h2 { font-size: 16px; } .md-body h3 { font-size: 14px; }
+.md-body blockquote { border-left: 3px solid var(--brand); padding-left: 13px; color: var(--muted); margin: 10px 0; }
+.md-body hr { border: none; border-top: 1px solid var(--line); margin: 12px 0; }
+.md-body a { color: #9fd0dd; }
+.md-body table { border-collapse: collapse; margin: 10px 0; width: 100%; font-size: 13px; overflow: hidden; border-radius: 12px; }
+.md-body th, .md-body td { border: 1px solid var(--line); padding: 7px 11px; }
+.md-body th { background: rgba(183,154,104,.12); color: #f3dfb5; }
+.md-body pre { margin: 10px 0; border-radius: 14px; overflow-x: auto; border: 1px solid var(--line); }
+.md-body pre code.hljs { border-radius: 14px; font-size: 13px; }
+.md-body code:not(.hljs) { background: rgba(255,255,255,.07); padding: 2px 6px; border-radius: 6px; font-family: 'Consolas', 'Courier New', monospace; font-size: 13px; color: #f3dfb5; }
+
+/* ── Copy button ── */
+.copy-btn {
+  position: absolute; top: 2px; right: 2px;
+  background: rgba(255,255,255,.055); border: 1px solid var(--line); color: var(--muted-2);
+  font-size: 13px; padding: 3px 8px; opacity: 0;
+  transition: opacity 0.15s, color .15s, background .15s; cursor: pointer; border-radius: 999px;
+  box-shadow: none;
+}
+.msg:hover .copy-btn { opacity: 1; }
+.copy-btn:hover { color: #f3dfb5; background: rgba(183,154,104,.11); box-shadow: none; }
+
+/* ── Input bar ── */
+#input-bar { padding: 16px; background: linear-gradient(180deg, rgba(7,10,16,.16), rgba(7,10,16,.62)); border-top: 1px solid var(--line); display: flex; gap: 12px; align-items: flex-end; }
+#user-input { flex: 1; height: 74px; resize: none; font-size: 14px; line-height: 1.58; border-radius: 22px; }
+#send-btn { height: 74px; width: 82px; font-size: 24px; border-radius: 22px; }
+#send-btn.stopping { font-size: 15px; background: rgba(112,32,40,.9); color: #ffd6da; }
+#send-btn.stopping:hover { background: rgba(139,36,47,.94); }
+
+/* ── Prompt templates ── */
+#prompt-list { list-style: none; max-height: 150px; overflow-y: auto; margin-top: 4px; }
+.pt-item {
+  display: flex; align-items: center; gap: 5px;
+  padding: 7px 8px; border-radius: 12px; cursor: pointer;
+  border: 1px solid transparent; margin-bottom: 4px;
+}
+.pt-item:hover { background: rgba(255,255,255,.055); border-color: var(--line); }
+.pt-name { flex: 1; font-size: 12px; color: #f3dfb5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pt-del { background: transparent; border: none; color: var(--muted-2); font-size: 14px; line-height: 1; padding: 0 3px; cursor: pointer; flex-shrink: 0; box-shadow: none; }
+.pt-del:hover { color: #ffb4ba; background: transparent; box-shadow: none; }
+.pt-empty { font-size: 12px; color: var(--muted-2); padding: 6px 2px; }
+
+/* ── Session rename ── */
+.sess-rename-input {
+  font-size: 12px; color: #f3dfb5; background: rgba(6,10,17,.72);
+  border: 1px solid rgba(183,154,104,.62); border-radius: 10px;
+  padding: 3px 7px; width: 140px; outline: none;
+}
+
+/* ── Config overlay ── */
+#cfg-panel { position: fixed; inset: 0; background: rgba(2,4,8,.72); display: none; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(10px); }
+#cfg-panel.open { display: flex; }
+#cfg-box { background: linear-gradient(180deg, rgba(22,29,42,.96), rgba(12,16,24,.96)); border: 1px solid var(--line); border-radius: 26px; padding: 26px; width: 760px; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow); }
+#cfg-box h2 { font-size: 17px; color: #f3dfb5; letter-spacing: .02em; }
+.cfg-row { display: flex; flex-direction: column; gap: 6px; }
+.cfg-row label { font-size: 12px; color: var(--muted); }
+.cfg-row input { width: 100%; }
+.cfg-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.cfg-source-item { padding: 9px; border: 1px solid var(--line); border-radius: 14px; cursor: pointer; background: rgba(255,255,255,.04); margin-bottom: 7px; }
+.cfg-source-item:hover { border-color: rgba(183,154,104,.38); background: rgba(183,154,104,.08); }
+.cfg-source-item.selected { background: rgba(183,154,104,.16); border-color: rgba(183,154,104,.42); }
+.cfg-key-list { display: flex; flex-direction: column; gap: 5px; max-height: 130px; overflow-y: auto; background:rgba(6,10,17,.62); border:1px solid var(--line); border-radius:14px; padding:8px; }
+.cfg-key-row { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); }
+.cfg-key-row code { flex:1; color:#f3dfb5; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+.prompt-item, .mat-item {
+  border: 1px solid transparent;
+  border-radius: 14px;
+  transition: background .16s ease, border-color .16s ease, transform .16s ease;
+}
+.prompt-item:hover, .mat-item:hover {
+  background: rgba(183,154,104,.08) !important;
+  border-color: rgba(183,154,104,.22) !important;
+  transform: translateY(-1px);
+}
+#prompts-sidebar, #prompt-detail, #materials-tab > div > div:first-child, #mat-detail {
+  background: linear-gradient(180deg, rgba(22,29,42,.78), rgba(10,14,21,.72)) !important;
+  border-color: var(--line) !important;
+}
+#prompt-detail, #mat-detail { border-radius: 0 28px 28px 0; }
+#prompts-sidebar, #materials-tab > div > div:first-child { border-radius: 28px 0 0 28px; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(215,226,242,.18); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(215,226,242,.28); }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <h1>Model Runner</h1>
+  <div class="tb-group">
+    <div class="dot" id="status-dot"></div>
+    <span style="font-size:12px;color:#64748b" id="status-text">未连接</span>
+  </div>
+  <div style="flex:1"></div>
+  <!-- Tab nav -->
+  <div class="tab-nav">
+    <button class="tab-btn active" data-tab="chat" onclick="switchTab('chat')">💬 聊天</button>
+    <button class="tab-btn" data-tab="prompts" onclick="switchTab('prompts')">📝 Prompt工作台</button>
+    <button class="tab-btn" data-tab="materials" onclick="switchTab('materials')">📚 素材搜集</button>
+  </div>
+  <div style="flex:1"></div>
+  <button class="secondary" onclick="toggleSessions()" title="切换会话面板">☰ 会话</button>
+  <button class="secondary" id="btn-api-managed" onclick="showApiManagedNotice()">🔒 API 由后台管理</button>
+  <button class="secondary" onclick="exportMarkdown()" title="导出为 Markdown">↓ MD</button>
+  <button class="secondary" onclick="exportJSON()" title="导出为 JSON">↓ JSON</button>
+  <button class="secondary" onclick="clearChat()">🗑 清空</button>
+</div>
+
+<div id="main">
+
+  <!-- ══ Chat Tab ══ -->
+  <div id="chat-tab" class="tab-panel" style="display:flex">
+
+  <!-- Sessions panel -->
+  <div id="sess-panel">
+    <div class="sess-header">
+      <span class="section-title">会话历史</span>
+      <button class="secondary" style="padding:2px 7px;font-size:11px" onclick="newSession()">+ 新建</button>
+    </div>
+    <ul id="sess-list"><li class="sess-empty">加载中…</li></ul>
+  </div>
+
+  <!-- Model + params sidebar -->
+  <div id="sidebar">
+    <div>
+      <div class="section-title">模型（显示平台）</div>
+      <input type="text" id="model-search" placeholder="搜索模型名称…" oninput="filterModels(this.value)">
+      <ul id="model-list"><li class="loading">请先配置 API 并点击刷新</li></ul>
+      <div style="margin-top:6px;display:flex;gap:6px">
+        <button class="secondary" style="flex:1;font-size:12px" onclick="loadAllModels()">↻ 刷新</button>
+      </div>
+      <div id="selected-model" style="margin-top:6px">未选择模型</div>
+      <div id="route-editor" class="hidden" style="display:none;margin-top:8px;padding:8px;background:#151824;border:1px solid #2d3148;border-radius:6px;font-size:11px;color:#94a3b8">
+        <div style="color:#c4b5fd;margin-bottom:6px">模型平台路由</div>
+        <div style="font-size:10px;color:#64748b;line-height:1.5;margin-bottom:6px">
+          平台=这个模型在哪些 API 平台可用；优先=按顺序尝试；禁用=这个模型绝不用的平台。
+        </div>
+        <div class="cfg-row" style="margin-bottom:6px">
+          <label>优先平台（已支持该模型的平台）</label>
+          <select id="route-preferred" multiple size="4" style="font-size:11px;width:100%"></select>
+        </div>
+        <div style="display:flex;gap:4px;margin-bottom:6px">
+          <button class="secondary" style="font-size:10px;flex:1;padding:3px" onclick="moveRouteOption('route-preferred', -1)">上移</button>
+          <button class="secondary" style="font-size:10px;flex:1;padding:3px" onclick="moveRouteOption('route-preferred', 1)">下移</button>
+        </div>
+        <div class="cfg-row" style="margin-bottom:6px">
+          <label>禁用平台</label>
+          <select id="route-disabled" multiple size="3" style="font-size:11px;width:100%"></select>
+        </div>
+        <button class="secondary" style="font-size:11px;width:100%;margin-bottom:6px" onclick="saveSelectedModelRoute()">保存此模型路由</button>
+        <button class="secondary" style="font-size:11px;width:100%" onclick="toggleBatchRoutePanel()">批量设置模型路由</button>
+      </div>
+      <div id="batch-route-panel" class="hidden" style="display:none;margin-top:8px;padding:8px;background:#151824;border:1px solid #2d3148;border-radius:6px;font-size:11px;color:#94a3b8">
+        <div style="color:#c4b5fd;margin-bottom:6px">批量设置</div>
+        <div style="display:flex;gap:4px;margin-bottom:6px">
+          <button class="secondary" style="font-size:10px;flex:1;padding:3px" onclick="selectVisibleRouteModels(true)">全选当前列表</button>
+          <button class="secondary" style="font-size:10px;flex:1;padding:3px" onclick="selectVisibleRouteModels(false)">取消</button>
+        </div>
+        <div class="cfg-row" style="margin-bottom:6px">
+          <label>批量优先平台</label>
+          <select id="batch-preferred" multiple size="4" style="font-size:11px;width:100%"></select>
+        </div>
+        <div style="display:flex;gap:4px;margin-bottom:6px">
+          <button class="secondary" style="font-size:10px;flex:1;padding:3px" onclick="moveRouteOption('batch-preferred', -1)">上移</button>
+          <button class="secondary" style="font-size:10px;flex:1;padding:3px" onclick="moveRouteOption('batch-preferred', 1)">下移</button>
+        </div>
+        <div class="cfg-row" style="margin-bottom:6px">
+          <label>批量禁用平台</label>
+          <select id="batch-disabled" multiple size="3" style="font-size:11px;width:100%"></select>
+        </div>
+        <button style="font-size:11px;width:100%;margin-bottom:6px" onclick="saveBatchRoutes()">应用到已勾选模型</button>
+      <div id="price-wizard" class="hidden" style="display:none">
+          <label>价目表（粘贴：模型 平台 输入价 输出价；也支持逗号/制表符分隔）</label>
+          <textarea id="price-table-input" style="height:90px;font-size:11px" placeholder="claude-opus-4-7 dmxapi 15 75&#10;claude-opus-4-7 mytokenland 20 90"></textarea>
+          <button class="secondary" style="font-size:11px;width:100%" onclick="startPriceRouteWizard()">按价目表逐个推荐</button>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">系统提示词</div>
+      <textarea id="system-prompt" placeholder="（可留空）输入系统提示词…"></textarea>
+    </div>
+
+    <div>
+      <div class="section-title" style="display:flex;align-items:center;justify-content:space-between">
+        <span>提示词模板</span>
+        <button class="secondary" style="padding:1px 7px;font-size:11px" onclick="savePromptTemplate()" title="将当前系统提示词保存为模板">+ 保存</button>
+      </div>
+      <ul id="prompt-list"><li class="pt-empty">暂无模板</li></ul>
+    </div>
+
+    <div>
+      <div class="section-title">参数</div>
+      <div class="param-row">
+        <label>Temperature</label>
+        <input type="range" id="temp-slider" min="0" max="2" step="0.05" value="0.7"
+          oninput="document.getElementById('temp-val').textContent=parseFloat(this.value).toFixed(2)">
+        <span id="temp-val">0.70</span>
+      </div>
+      <div class="param-row" style="margin-top:6px">
+        <label>Max Tokens</label>
+        <input type="number" id="max-tokens" value="4096" min="1" max="128000" step="256">
+      </div>
+      <div class="param-row" style="margin-top:6px">
+        <label>流式输出</label>
+        <input type="checkbox" id="stream-mode" checked style="width:16px;height:16px;accent-color:#6366f1">
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">OpenClaw 接入</div>
+      <div style="font-size:11px;color:#64748b;line-height:1.6">
+        POST http://localhost:4000/chat<br>
+        Body (JSON):<br>
+        <code style="color:#818cf8">{ model, messages, system,<br>temperature, max_tokens,<br>callback_url? }</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat area -->
+  <div id="chat-area">
+    <div id="messages">
+      <div class="msg assistant">
+        <div class="msg-role">系统</div>
+        <div class="msg-body">欢迎使用 Model Runner。请先配置 API 密钥，选择模型后开始对话。</div>
+      </div>
+    </div>
+    <div id="input-bar">
+      <textarea id="user-input" placeholder="输入消息… (Ctrl+Enter 发送)" onkeydown="onKeyDown(event)"></textarea>
+      <button id="send-btn" onclick="handleSendBtn()">↑</button>
+    </div>
+  </div>
+  </div><!-- /chat-tab -->
+
+  <!-- ══ Prompts Tab ══ -->
+  <div id="prompts-tab" class="tab-panel">
+    <div style="display:flex;flex:1;overflow:hidden">
+      <div id="prompts-sidebar" style="width:260px;flex-shrink:0;background:#1a1d27;border-right:1px solid #2d3148;display:flex;flex-direction:column;padding:12px;gap:8px;overflow-y:auto">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span class="section-title">Prompt 列表</span>
+          <button class="secondary" style="padding:2px 8px;font-size:11px" onclick="openPromptEditor()">+ 新建</button>
+        </div>
+        <input type="text" id="prompt-search" placeholder="搜索 prompt…" style="width:100%" oninput="filterPromptList()">
+        <div style="display:flex;gap:4px;flex-wrap:wrap" id="prompt-tag-filters"></div>
+        <div id="prompt-list-v2" style="flex:1;overflow-y:auto;font-size:12px;color:#475569;padding:8px">加载中…</div>
+        <div style="display:flex;gap:6px">
+          <button class="secondary" style="flex:1;font-size:11px" onclick="exportPrompts()">导出</button>
+          <button class="secondary" style="flex:1;font-size:11px" onclick="document.getElementById('import-prompts-file').click()">导入</button>
+          <input type="file" id="import-prompts-file" accept=".json" style="display:none" onchange="importPromptsFile(this.files[0])">
+        </div>
+      </div>
+      <div id="prompt-detail" style="flex:1;display:flex;flex-direction:column;overflow:hidden;padding:16px;gap:12px;background:#0f1117">
+        <div id="prompt-detail-inner" style="flex:1;overflow-y:auto;color:#475569;font-size:13px;text-align:center;padding-top:60px">← 选择左侧 Prompt 查看详情</div>
+      </div>
+    </div>
+  </div><!-- /prompts-tab -->
+
+  <!-- ══ Materials Tab ══ -->
+  <div id="materials-tab" class="tab-panel">
+    <div style="display:flex;flex:1;overflow:hidden">
+      <div style="width:300px;flex-shrink:0;background:#1a1d27;border-right:1px solid #2d3148;display:flex;flex-direction:column;padding:12px;gap:8px;overflow-y:auto">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span class="section-title">素材列表</span>
+          <button class="secondary" style="padding:2px 8px;font-size:11px" onclick="openMaterialEditor()">+ 新增</button>
+        </div>
+        <div style="display:flex;gap:4px">
+          <input type="text" id="mat-quick-title" placeholder="快速入库…" style="flex:1;font-size:12px" onkeydown="if(event.key==='Enter')quickAddMaterial()">
+          <button style="padding:4px 8px;font-size:12px" onclick="quickAddMaterial()">入库</button>
+        </div>
+        <input type="text" id="mat-search" placeholder="搜索标题/内容…" style="width:100%;font-size:12px" oninput="loadMaterials()">
+        <div style="display:flex;gap:4px;flex-wrap:wrap" id="mat-tag-filters"></div>
+        <div id="mat-stats-bar" style="font-size:11px;color:#64748b;display:flex;gap:8px;flex-wrap:wrap"></div>
+        <div id="mat-list" style="flex:1;overflow-y:auto;font-size:12px;color:#475569;padding:8px">加载中…</div>
+      </div>
+      <div id="mat-detail" style="flex:1;display:flex;flex-direction:column;overflow:hidden;padding:16px;gap:12px;background:#0f1117">
+        <div id="mat-detail-inner" style="flex:1;overflow-y:auto;color:#475569;font-size:13px;text-align:center;padding-top:60px">← 选择左侧素材查看详情</div>
+      </div>
+    </div>
+  </div><!-- /materials-tab -->
+</div>
+
+<!-- Config overlay -->
+<div id="cfg-panel" onmousedown="onCfgBackdropMouseDown(event)" onmouseup="onCfgBackdropMouseUp(event)">
+  <div id="cfg-box">
+    <h2>API 平台配置</h2>
+    <div style="display:flex;gap:14px;align-items:stretch">
+      <div style="width:240px;flex-shrink:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span class="section-title">平台列表</span>
+          <button class="secondary" style="font-size:11px;padding:2px 8px" onclick="newCfgSource()">+ 新增</button>
+        </div>
+        <div id="cfg-source-list" style="max-height:360px;overflow-y:auto"></div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+        <div class="cfg-row">
+          <label>平台名称（如 dmxapi / mytokenland）</label>
+          <input type="text" id="cfg-name" placeholder="平台名">
+        </div>
+        <div class="cfg-row">
+          <label>Base URL（如 https://api.dmxapi.cn/v1）</label>
+          <input type="text" id="cfg-url" placeholder="https://api.openai.com/v1">
+        </div>
+        <div class="cfg-row">
+          <label>已保存 API Key</label>
+          <div id="cfg-key-list" class="cfg-key-list"><div style="color:#475569;font-size:11px">暂无 key</div></div>
+        </div>
+        <div class="cfg-row">
+          <label>新增 API Key（保存后追加到此平台）</label>
+          <input type="password" id="cfg-key" placeholder="sk-…">
+        </div>
+        <div class="cfg-row">
+          <label>请求超时（毫秒）</label>
+          <input type="number" id="cfg-timeout" value="120000" min="5000" step="5000">
+        </div>
+        <div class="cfg-row">
+          <label>自动重试次数（502/503/超时等）</label>
+          <input type="number" id="cfg-retries" value="3" min="0" max="10">
+        </div>
+        <div class="cfg-actions">
+          <button class="secondary" onclick="closeCfg()">取消</button>
+          <button class="secondary" onclick="deleteCfgSource()">删除平台</button>
+          <button onclick="saveConfig()">保存平台</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@15/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/highlight.min.js"></script>
+<script>
+const HISTORY_LIMIT = 40;
+
+let allModels = [];
+let selectedModel = null;
+let selectedLi = null;
+let chatHistory = [];
+let currentSessionId = null;
+let sessions = [];
+let abortController = null;
+let isGenerating = false;
+
+// ─── Marked setup ─────────────────────────────────────────────────────────────
+marked.use({
+  breaks: true,
+  gfm: true,
+  renderer: {
+    code(arg) {
+      const text = typeof arg === 'object' ? arg.text : String(arg);
+      const lang = typeof arg === 'object' ? (arg.lang || '') : '';
+      const language = lang && hljs.getLanguage(lang) ? lang : 'plaintext';
+      try {
+        const highlighted = language !== 'plaintext'
+          ? hljs.highlight(text, { language }).value
+          : escHtml(text);
+        return `<pre><code class="hljs language-${language}">${highlighted}</code></pre>`;
+      } catch {
+        return `<pre><code>${escHtml(text)}</code></pre>`;
+      }
+    }
+  }
+});
+
+function renderMarkdown(text) {
+  try { return marked.parse(text); }
+  catch { return `<pre>${escHtml(text)}</pre>`; }
+}
+
+// ─── Utils ────────────────────────────────────────────────────────────────────
+let scrollPending = false;
+function scheduleScroll() {
+  if (scrollPending) return;
+  scrollPending = true;
+  requestAnimationFrame(() => {
+    const el = document.getElementById('messages');
+    el.scrollTop = el.scrollHeight;
+    scrollPending = false;
+  });
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escAttr(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function relativeTime(iso) {
+  if (!iso) return '';
+  const diff = Date.now() - new Date(iso).getTime();
+  if (diff < 60000) return '刚刚';
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`;
+  return `${Math.floor(diff / 86400000)}天前`;
+}
+
+// ─── Sessions ─────────────────────────────────────────────────────────────────
+async function loadSessionList() {
+  try {
+    const data = await fetch('/sessions').then(r => r.json());
+    sessions = data.sessions || [];
+    renderSessionList(sessions);
+    return sessions;
+  } catch {
+    sessions = [];
+    renderSessionList([]);
+    return [];
+  }
+}
+
+function renderSessionList(list) {
+  const el = document.getElementById('sess-list');
+  if (!list.length) {
+    el.innerHTML = '<li class="sess-empty">暂无会话</li>';
+    return;
+  }
+  el.innerHTML = list.map(s => {
+    const active = s.id === currentSessionId ? ' active' : '';
+    const count = s.messageCount ? `${s.messageCount}条` : '空';
+    return `<li data-id="${escAttr(s.id)}" class="sess-item${active}">
+      <div class="sess-name" data-rename="${escAttr(s.id)}" title="双击重命名">${escHtml(s.name)}</div>
+      <div class="sess-meta">${count} · ${relativeTime(s.updatedAt)}</div>
+      <button class="sess-del" data-del="${escAttr(s.id)}" title="删除">×</button>
+    </li>`;
+  }).join('');
+}
+
+document.getElementById('sess-list').addEventListener('click', async (e) => {
+  const delBtn = e.target.closest('[data-del]');
+  if (delBtn) { await deleteSessionById(delBtn.dataset.del); return; }
+  const li = e.target.closest('li[data-id]');
+  if (li) await switchSession(li.dataset.id);
+});
+
+document.getElementById('sess-list').addEventListener('dblclick', (e) => {
+  const nameEl = e.target.closest('[data-rename]');
+  if (!nameEl) return;
+  const id = nameEl.dataset.rename;
+  const current = sessions.find(s => s.id === id);
+  if (!current) return;
+  const input = document.createElement('input');
+  input.className = 'sess-rename-input';
+  input.value = current.name;
+  nameEl.replaceWith(input);
+  input.focus();
+  input.select();
+  const commit = async () => {
+    const newName = input.value.trim() || current.name;
+    try {
+      await fetch(`/sessions/${id}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName }),
+      });
+      const idx = sessions.findIndex(s => s.id === id);
+      if (idx >= 0) sessions[idx].name = newName;
+    } catch {}
+    renderSessionList(sessions);
+  };
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
+    if (ev.key === 'Escape') { input.value = current.name; input.blur(); }
+  });
+});
+
+async function newSession() {
+  await autoSaveSession();
+  try {
+    const s = await fetch('/sessions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: '新会话' }),
+    }).then(r => r.json());
+    currentSessionId = s.id;
+    chatHistory = [];
+    selectedModel = null;
+    document.getElementById('selected-model').textContent = '未选择模型';
+    document.getElementById('system-prompt').value = '';
+    document.getElementById('messages').innerHTML = '<div class="msg assistant"><div class="msg-role">系统</div><div class="msg-body">新会话已创建。</div></div>';
+    await loadSessionList();
+  } catch (e) {
+    alert('创建会话失败: ' + e.message);
+  }
+}
+
+async function switchSession(id) {
+  if (id === currentSessionId) return;
+  await autoSaveSession();
+  try {
+    const s = await fetch(`/sessions/${id}`).then(r => r.json());
+    currentSessionId = id;
+    chatHistory = s.messages || [];
+    if (s.model) selectModel(s.model);
+    else { selectedModel = null; document.getElementById('selected-model').textContent = '未选择模型'; }
+    document.getElementById('system-prompt').value = s.system || '';
+    const msgDiv = document.getElementById('messages');
+    msgDiv.innerHTML = '';
+    for (const m of chatHistory) {
+      if (m.role === 'user') appendMessage('user', m.content, null, false);
+      else if (m.role === 'assistant') appendMessage('assistant', m.content, null, false);
+    }
+    if (chatHistory.length === 0) {
+      msgDiv.innerHTML = '<div class="msg assistant"><div class="msg-role">系统</div><div class="msg-body">会话已加载。</div></div>';
+    }
+    scheduleScroll();
+    renderSessionList(sessions);
+  } catch (e) {
+    alert('加载会话失败: ' + e.message);
+  }
+}
+
+async function deleteSessionById(id) {
+  if (!confirm('删除这个会话？')) return;
+  await fetch(`/sessions/${id}`, { method: 'DELETE' });
+  if (id === currentSessionId) {
+    currentSessionId = null;
+    chatHistory = [];
+  }
+  const list = await loadSessionList();
+  if (!currentSessionId) {
+    if (list.length > 0) await switchSession(list[0].id);
+    else await newSession();
+  }
+}
+
+async function autoSaveSession() {
+  if (!currentSessionId || !chatHistory.length) return;
+  const system = document.getElementById('system-prompt').value.trim();
+  const firstUser = chatHistory.find(m => m.role === 'user');
+  const name = firstUser
+    ? firstUser.content.slice(0, 30) + (firstUser.content.length > 30 ? '…' : '')
+    : '新会话';
+  try {
+    await fetch(`/sessions/${currentSessionId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: chatHistory, model: selectedModel || '', system, name }),
+    });
+    const idx = sessions.findIndex(s => s.id === currentSessionId);
+    if (idx >= 0) {
+      sessions[idx] = { ...sessions[idx], name, messageCount: chatHistory.length, updatedAt: new Date().toISOString() };
+      renderSessionList(sessions);
+    }
+  } catch {}
+}
+
+function toggleSessions() {
+  document.getElementById('sess-panel').classList.toggle('hidden');
+}
+
+function showApiManagedNotice() {
+  alert('模型平台、BaseURL、API Key、路由优先级由 API / OpenClaw 管理。\n前端只负责选择模型和发起对话。');
+}
+
+// ─── Config panel ─────────────────────────────────────────────────────────────
+let cfgSources = [];
+let cfgActiveSourceId = null;
+let cfgEditingNew = false;
+let cfgBackdropMouseDown = false;
+
+function onCfgBackdropMouseDown(e) {
+  cfgBackdropMouseDown = e.target === e.currentTarget;
+}
+
+function onCfgBackdropMouseUp(e) {
+  if (cfgBackdropMouseDown && e.target === e.currentTarget) closeCfg();
+  cfgBackdropMouseDown = false;
+}
+
+async function refreshCfgSources() {
+  const d = await fetch('/sources').then(r => r.json());
+  cfgSources = d.sources || [];
+  cfgActiveSourceId = d.activeSourceId || cfgSources[0]?.id || '';
+  const sel = document.getElementById('cfg-source');
+  sel.innerHTML = cfgSources.map(s => `<option value="${escAttr(s.id)}">${escHtml(s.name || s.id)}${s.active ? '（当前）' : ''}</option>`).join('');
+  if (cfgActiveSourceId) sel.value = cfgActiveSourceId;
+}
+
+async function openCfg() {
+  try {
+    const d = await fetch('/config').then(r => r.json());
+    await refreshCfgSources();
+    document.getElementById('cfg-timeout').value = d.timeout || 120000;
+    document.getElementById('cfg-retries').value = d.retries ?? 3;
+    selectCfgSource();
+  } catch {}
+  document.getElementById('cfg-panel').classList.add('open');
+}
+function closeCfg() {
+  document.getElementById('cfg-panel').classList.remove('open');
+}
+function selectCfgSource() {
+  cfgEditingNew = false;
+  const id = document.getElementById('cfg-source').value;
+  const src = cfgSources.find(s => s.id === id) || {};
+  document.getElementById('cfg-name').value = src.name || '';
+  document.getElementById('cfg-url').value = src.baseUrl || '';
+  document.getElementById('cfg-key').value = '';
+}
+function newCfgSource() {
+  cfgEditingNew = true;
+  document.getElementById('cfg-source').value = '';
+  document.getElementById('cfg-name').value = '';
+  document.getElementById('cfg-url').value = '';
+  document.getElementById('cfg-key').value = '';
+  document.getElementById('cfg-name').focus();
+}
+async function deleteCfgSource() {
+  const id = document.getElementById('cfg-source').value;
+  if (!id) return alert('请先选择要删除的平台');
+  if (!confirm('删除这个 API 平台？')) return;
+  const r = await fetch(`/sources/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  const d = await r.json();
+  if (!r.ok) return alert('删除失败: ' + JSON.stringify(d));
+  await refreshCfgSources();
+  selectCfgSource();
+  loadModels();
+}
+async function saveConfig() {
+  const name = document.getElementById('cfg-name').value.trim();
+  const baseUrl = document.getElementById('cfg-url').value.trim();
+  const key = document.getElementById('cfg-key').value.trim();
+  const timeout = parseInt(document.getElementById('cfg-timeout').value);
+  const retries = parseInt(document.getElementById('cfg-retries').value);
+  if (!baseUrl) return alert('Base URL 不能为空');
+  const sourcePayload = { name, baseUrl };
+  if (key) sourcePayload.apiKey = key;
+  try {
+    const sourceId = document.getElementById('cfg-source').value;
+    let r;
+    if (cfgEditingNew || !sourceId) {
+      r = await fetch('/sources', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sourcePayload) });
+    } else {
+      r = await fetch(`/sources/${encodeURIComponent(sourceId)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sourcePayload) });
+    }
+    const d = await r.json();
+    if (!r.ok) return alert('保存平台失败: ' + JSON.stringify(d));
+    await fetch('/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ timeout, retries }) });
+    closeCfg();
+    setStatus('ok', '已保存平台，正在加载模型…');
+    loadModels();
+  } catch (e) {
+    alert('请求失败: ' + e.message);
+  }
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+
+document.getElementById('model-list').addEventListener('click', (e) => {
+  const li = e.target.closest('li[data-id]');
+  if (li) selectModel(li.dataset.id);
+});
+
+function selectModel(id) {
+  selectedModel = id;
+  document.getElementById('selected-model').textContent = id ? ('✓ ' + id) : '未选择模型';
+  if (selectedLi) selectedLi.classList.remove('selected');
+  selectedLi = document.querySelector(`#model-list li[data-id="${CSS.escape(id)}"]`);
+  if (selectedLi) selectedLi.classList.add('selected');
+}
+
+function routeIdsFromSelect(id) {
+  return [...document.getElementById(id).selectedOptions].map(o => o.value).filter(Boolean);
+}
+
+function setSelectOptions(id, options, selected = []) {
+  const el = document.getElementById(id);
+  const selectedSet = new Set(selected);
+  el.innerHTML = options.map(opt => `<option value="${escAttr(opt)}" ${selectedSet.has(opt) ? 'selected' : ''}>${escHtml(opt)}</option>`).join('');
+}
+
+function moveRouteOption(id, delta) {
+  const el = document.getElementById(id);
+  const options = [...el.options];
+  const selected = [...el.selectedOptions].map(o => o.value);
+  if (!selected.length) return;
+  const ordered = options.filter(o => !selected.includes(o.value));
+  if (delta < 0) {
+    const insertAt = Math.max(0, options.findIndex(o => o.selected));
+    ordered.splice(insertAt, 0, ...options.filter(o => o.selected));
+  } else {
+    const insertAt = Math.min(ordered.length, options.length - selected.length);
+    ordered.splice(insertAt, 0, ...options.filter(o => o.selected));
+  }
+  el.innerHTML = ordered.map(o => `<option value="${escAttr(o.value)}" ${selected.includes(o.value) ? 'selected' : ''}>${escHtml(o.textContent)}</option>`).join('');
+}
+
+function toggleBatchRoutePanel() {
+  const box = document.getElementById('batch-route-panel');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+  syncBatchRouteOptions();
+}
+
+function syncBatchRouteOptions() {
+  const sourceIds = routeSources.map(s => s.id).filter(Boolean);
+  const selected = selectedModel ? (modelRoutes[selectedModel]?.preferredPlatforms || modelRoutes[selectedModel]?.preferred || selectedSourceIdsForModel(selectedModel)) : [];
+  setSelectOptions('route-preferred', sourceIds, selected);
+  setSelectOptions('route-disabled', sourceIds, modelRoutes[selectedModel]?.disabledPlatforms || modelRoutes[selectedModel]?.disabled || []);
+  setSelectOptions('batch-preferred', sourceIds, sourceIds);
+  setSelectOptions('batch-disabled', sourceIds, []);
+}
+
+function selectedSourceIdsForModel(id) {
+  const m = allSourceModels.find(x => x.id === id);
+  return (m?.platforms || []).map(p => p.sourceId).filter(Boolean);
+}
+
+function selectVisibleRouteModels(on) {
+  document.querySelectorAll('.route-model-check').forEach(cb => { cb.checked = on; });
+}
+
+function getBatchSelectedModels() {
+  return [...document.querySelectorAll('.route-model-check:checked')].map(cb => cb.dataset.model);
+}
+
+async function saveBatchRoutes() {
+  const models = getBatchSelectedModels();
+  if (!models.length) return alert('请先勾选要批量设置的模型');
+  const payload = {
+    updates: models.map(model => ({
+      model,
+      preferredPlatforms: routeIdsFromSelect('batch-preferred'),
+      disabledPlatforms: routeIdsFromSelect('batch-disabled'),
+    })),
+  };
+  const r = await fetch('/model-routes', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const d = await r.json();
+  if (!r.ok) return alert('批量保存失败: ' + JSON.stringify(d));
+  modelRoutes = d.modelRoutes || modelRoutes;
+  renderModels(allSourceModels);
+  selectModel(selectedModel);
+  setStatus('ok', `已批量保存 ${models.length} 个模型路由`);
+}
+
+function currentRouteDataForModel(modelId) {
+  const model = allSourceModels.find(x => x.id === modelId);
+  const platforms = (model?.platforms || []).map(p => p.sourceId).filter(Boolean);
+  const route = modelRoutes[modelId] || {};
+  return {
+    platformIds: platforms,
+    preferredPlatforms: route.preferredPlatforms || route.preferred || platforms,
+    disabledPlatforms: route.disabledPlatforms || route.disabled || [],
+  };
+}
+
+function renderRouteEditor(id) {
+  const box = document.getElementById('route-editor');
+  if (!id) { box.style.display = 'none'; return; }
+  const data = currentRouteDataForModel(id);
+  syncBatchRouteOptions();
+  setSelectOptions('route-preferred', routeSources.map(s => s.id).filter(Boolean), data.preferredPlatforms);
+  setSelectOptions('route-disabled', routeSources.map(s => s.id).filter(Boolean), data.disabledPlatforms);
+  box.style.display = 'block';
+}
+
+async function saveSelectedModelRoute() {
+  if (!selectedModel) return;
+  const payload = {
+    preferredPlatforms: routeIdsFromSelect('route-preferred'),
+    disabledPlatforms: routeIdsFromSelect('route-disabled'),
+  };
+  const r = await fetch(`/model-routes/${encodeURIComponent(selectedModel)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+  const d = await r.json();
+  if (!r.ok) return alert('保存路由失败: ' + JSON.stringify(d));
+  modelRoutes[selectedModel] = d.route;
+  renderModels(allSourceModels);
+  selectModel(selectedModel);
+  setStatus('ok', '已保存模型平台路由');
+}
+
+function normalizePriceTableText(text) {
+  return text.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+}
+
+function parsePriceRow(line) {
+  const parts = line.split(/[\s,\t|]+/).filter(Boolean);
+  if (parts.length < 4) return null;
+  const [model, platform, inputPrice, outputPrice] = parts;
+  const numInput = Number(inputPrice);
+  const numOutput = Number(outputPrice);
+  if (!model || !platform || Number.isNaN(numInput) || Number.isNaN(numOutput)) return null;
+  return { model, platform, inputPrice: numInput, outputPrice: numOutput, total: numInput + numOutput };
+}
+
+function parsePriceRows(text) {
+  const byModel = new Map();
+  for (const row of normalizePriceTableText(text).map(parsePriceRow).filter(Boolean)) {
+    if (!byModel.has(row.model)) byModel.set(row.model, []);
+    byModel.get(row.model).push(row);
+  }
+  return [...byModel.entries()].map(([model, rows]) => ({ model, rows: rows.sort((a, b) => a.total - b.total) }));
+}
+
+async function startPriceRouteWizard() {
+  const groups = parsePriceRows(document.getElementById('price-table-input').value);
+  if (!groups.length) return alert('请先粘贴价目表');
+  let changed = 0;
+  for (const group of groups) {
+    const model = allSourceModels.find(m => m.id === group.model);
+    if (!model) continue;
+    const current = currentRouteDataForModel(group.model);
+    const supported = new Set((model.platforms || []).map(p => p.sourceId));
+    const ordered = group.rows.map(r => r.platform).filter(id => supported.has(id));
+    if (!ordered.length) continue;
+    const uniqueOrdered = [...new Set(ordered)];
+    const preferred = [...uniqueOrdered, ...current.preferredPlatforms.filter(id => supported.has(id) && !uniqueOrdered.includes(id))];
+    const disabled = current.disabledPlatforms.filter(id => id !== preferred[0]);
+    if (JSON.stringify(preferred) === JSON.stringify(current.preferredPlatforms) && JSON.stringify(disabled) === JSON.stringify(current.disabledPlatforms)) continue;
+    const priceLines = group.rows
+      .filter(r => supported.has(r.platform))
+      .map((r, idx) => `${idx + 1}. ${r.platform}：输入 ${r.inputPrice} / 输出 ${r.outputPrice} / 合计 ${r.total}`)
+      .join('\n');
+    const ok = confirm(`模型 ${group.model}\n\n按价格推荐优先级：\n${priceLines}\n\n当前优先：${current.preferredPlatforms.join(' → ') || '无'}\n建议优先：${preferred.join(' → ')}\n\n是否应用这个更换？`);
+    if (!ok) continue;
+    const r = await fetch(`/model-routes/${encodeURIComponent(group.model)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ preferredPlatforms: preferred, disabledPlatforms: disabled }),
+    });
+    const d = await r.json();
+    if (!r.ok) {
+      alert(`更新 ${group.model} 失败: ${JSON.stringify(d)}`);
+      continue;
+    }
+    modelRoutes[group.model] = d.route;
+    changed++;
+  }
+  renderModels(allSourceModels);
+  if (selectedModel) selectModel(selectedModel);
+  setStatus('ok', `价目表推荐已处理，更新 ${changed} 个模型`);
+}
+
+// ─── Status ───────────────────────────────────────────────────────────────────
+function setStatus(state, text) {
+  document.getElementById('status-dot').className = 'dot' + (state === 'ok' ? ' ok' : state === 'err' ? ' err' : '');
+  document.getElementById('status-text').textContent = text;
+}
+
+// ─── Messages ─────────────────────────────────────────────────────────────────
+function copyMsg(btn) {
+  const bodyEl = btn.closest('.msg').querySelector('.msg-body');
+  const text = (bodyEl.textContent || '').trim();
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓';
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+  }).catch(() => {});
+}
+
+function appendMessage(role, content, meta, withCopy = true) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  const roleLabel = role === 'user' ? '你' : role === 'assistant' ? (selectedModel || '助手') : '错误';
+
+  let bodyContent;
+  if (role === 'assistant') {
+    bodyContent = `<div class="msg-body md-body">${renderMarkdown(content)}</div>`;
+  } else {
+    bodyContent = `<div class="msg-body">${escHtml(content)}</div>`;
+  }
+
+  div.innerHTML = `
+    <div class="msg-role">${escHtml(roleLabel)}</div>
+    ${bodyContent}
+    ${meta ? `<div class="msg-meta">${escHtml(meta)}</div>` : ''}
+    ${withCopy ? '<button class="copy-btn" onclick="copyMsg(this)" title="复制">⎘</button>' : ''}
+  `;
+  document.getElementById('messages').appendChild(div);
+  scheduleScroll();
+  return div.querySelector('.msg-body');
+}
+
+function clearChat() {
+  chatHistory = [];
+  document.getElementById('messages').innerHTML = '<div class="msg assistant"><div class="msg-role">系统</div><div class="msg-body">对话已清空。</div></div>';
+  if (currentSessionId) autoSaveSession();
+}
+
+function trimHistory() {
+  if (chatHistory.length > HISTORY_LIMIT) chatHistory.splice(0, chatHistory.length - HISTORY_LIMIT);
+}
+
+// ─── Send / Stop ──────────────────────────────────────────────────────────────
+function onKeyDown(e) {
+  if (e.key === 'Enter' && e.ctrlKey) { e.preventDefault(); if (!isGenerating) sendMessage(); }
+}
+
+function handleSendBtn() {
+  if (isGenerating) stopGeneration();
+  else sendMessage();
+}
+
+function stopGeneration() {
+  if (abortController) abortController.abort();
+}
+
+function setGenerating(on) {
+  isGenerating = on;
+  const btn = document.getElementById('send-btn');
+  if (on) {
+    btn.textContent = '■';
+    btn.title = '停止生成 (Esc)';
+    btn.classList.add('stopping');
+  } else {
+    btn.textContent = '↑';
+    btn.title = '发送';
+    btn.classList.remove('stopping');
+    abortController = null;
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && isGenerating) stopGeneration();
+});
+
+async function sendMessage() {
+  const input = document.getElementById('user-input');
+  const content = input.value.trim();
+  if (!content) return;
+  if (!selectedModel) { alert('请先选择模型'); return; }
+
+  input.value = '';
+  chatHistory.push({ role: 'user', content });
+  trimHistory();
+  appendMessage('user', content, null, true);
+
+  setGenerating(true);
+  abortController = new AbortController();
+
+  const useStream = document.getElementById('stream-mode').checked;
+  const system = document.getElementById('system-prompt').value.trim();
+  const temperature = parseFloat(document.getElementById('temp-slider').value);
+  const max_tokens = parseInt(document.getElementById('max-tokens').value);
+  const payload = { model: selectedModel, messages: [...chatHistory], temperature, max_tokens };
+  if (system) payload.system = system;
+
+  const t0 = Date.now();
+
+  if (useStream) {
+    // Create message bubble with streaming text
+    const div = document.createElement('div');
+    div.className = 'msg assistant';
+    div.innerHTML = `<div class="msg-role">${escHtml(selectedModel || '助手')}</div><div class="msg-body streaming"></div><button class="copy-btn" onclick="copyMsg(this)" title="复制">⎘</button>`;
+    document.getElementById('messages').appendChild(div);
+    scheduleScroll();
+    const bodyEl = div.querySelector('.msg-body');
+    let full = '';
+    let aborted = false;
+    let streamUsage = null;
+
+    try {
+      const res = await fetch('/chat/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: abortController.signal,
+      });
+
+      if (!res.ok) {
+        bodyEl.textContent = '请求失败: ' + await res.text();
+        div.className = 'msg error';
+      } else {
+        const reader = res.body.getReader();
+        const dec = new TextDecoder();
+        let buf = '';
+        outer: while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          const lines = buf.split('\n');
+          buf = lines.pop();
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const raw = line.slice(6).trim();
+            if (raw === '[DONE]') break outer;
+            try {
+              const obj = JSON.parse(raw);
+              if (obj.error) { bodyEl.textContent += '\n[错误] ' + obj.error; continue; }
+              if (obj.usage) { streamUsage = obj.usage; }
+              const delta = obj.choices?.[0]?.delta?.content;
+              if (delta) { full += delta; bodyEl.textContent += delta; scheduleScroll(); }
+            } catch {}
+          }
+        }
+      }
+    } catch (e) {
+      if (e.name === 'AbortError') {
+        aborted = true;
+        bodyEl.textContent = full || '（已停止）';
+      } else {
+        bodyEl.textContent = e.message;
+        div.className = 'msg error';
+      }
+    }
+
+    // Render markdown on completion
+    if (full) {
+      bodyEl.classList.remove('streaming');
+      bodyEl.classList.add('md-body');
+      bodyEl.innerHTML = renderMarkdown(full);
+    }
+
+    if (full) {
+      chatHistory.push({ role: 'assistant', content: full });
+      trimHistory();
+      const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
+      const metaDiv = document.createElement('div');
+      metaDiv.className = 'msg-meta';
+      const tokenStr = streamUsage ? ` · ${streamUsage.total_tokens} tokens` : '';
+      metaDiv.textContent = elapsed + 's' + tokenStr + (aborted ? ' · 已停止' : '');
+      div.insertBefore(metaDiv, div.querySelector('.copy-btn'));
+      autoSaveSession();
+    }
+
+  } else {
+    try {
+      const res = await fetch('/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: abortController.signal,
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        appendMessage('error', data.error || JSON.stringify(data));
+      } else {
+        const text = data.choices?.[0]?.message?.content || JSON.stringify(data);
+        chatHistory.push({ role: 'assistant', content: text });
+        trimHistory();
+        const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
+        const tokens = data.usage?.total_tokens;
+        appendMessage('assistant', text, elapsed + 's' + (tokens ? ` · ${tokens} tokens` : ''));
+        autoSaveSession();
+      }
+    } catch (e) {
+      if (e.name !== 'AbortError') appendMessage('error', e.message);
+    }
+  }
+
+  setGenerating(false);
+}
+
+// ─── Prompt templates ─────────────────────────────────────────────────────────
+let promptTemplates = [];
+
+async function loadPromptTemplates() {
+  try {
+    const d = await fetch('/prompts').then(r => r.json());
+    promptTemplates = d.prompts || [];
+    renderPromptList();
+  } catch {}
+}
+
+function renderPromptList() {
+  const el = document.getElementById('prompt-list');
+  if (!promptTemplates.length) {
+    el.innerHTML = '<li class="pt-empty">暂无模板，点击"+ 保存"添加</li>';
+    return;
+  }
+  el.innerHTML = promptTemplates.map(p =>
+    `<li class="pt-item" data-pt="${escAttr(p.id)}">
+      <span class="pt-name" title="${escAttr(p.name)}">${escHtml(p.name)}</span>
+      <button class="pt-del" data-pt-del="${escAttr(p.id)}" title="删除">×</button>
+    </li>`
+  ).join('');
+}
+
+document.getElementById('prompt-list').addEventListener('click', async (e) => {
+  const delBtn = e.target.closest('[data-pt-del]');
+  if (delBtn) {
+    e.stopPropagation();
+    const id = delBtn.dataset.ptDel;
+    await fetch(`/prompts/${id}`, { method: 'DELETE' });
+    promptTemplates = promptTemplates.filter(p => p.id !== id);
+    renderPromptList();
+    return;
+  }
+  const li = e.target.closest('[data-pt]');
+  if (!li) return;
+  const tpl = promptTemplates.find(p => p.id === li.dataset.pt);
+  if (tpl) document.getElementById('system-prompt').value = tpl.content;
+});
+
+async function savePromptTemplate() {
+  const content = document.getElementById('system-prompt').value.trim();
+  if (!content) { alert('系统提示词为空，无法保存'); return; }
+  const name = prompt('模板名称:', content.slice(0, 20) + (content.length > 20 ? '…' : ''));
+  if (!name) return;
+  try {
+    const p = await fetch('/prompts', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, content }),
+    }).then(r => r.json());
+    promptTemplates.unshift(p);
+    renderPromptList();
+  } catch (e) { alert('保存失败: ' + e.message); }
+}
+
+// ─── Export ───────────────────────────────────────────────────────────────────
+function exportTs() {
+  return new Date().toISOString().slice(0, 16).replace('T', '_').replace(':', '-');
+}
+
+function downloadFile(filename, content, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], { type }));
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function exportMarkdown() {
+  if (!chatHistory.length) { alert('当前会话无消息'); return; }
+  const model = selectedModel || '助手';
+  const lines = chatHistory.map(m => {
+    const role = m.role === 'user' ? '**你**' : `**${model}**`;
+    return `${role}\n\n${m.content}\n`;
+  });
+  const md = `# 对话记录\n\n---\n\n` + lines.join('\n---\n\n');
+  downloadFile(`chat_${exportTs()}.md`, md, 'text/markdown');
+}
+
+function exportJSON() {
+  if (!chatHistory.length) { alert('当前会话无消息'); return; }
+  downloadFile(`chat_${exportTs()}.json`, JSON.stringify({ model: selectedModel, messages: chatHistory }, null, 2), 'application/json');
+}
+
+// ─── Tab switching ────────────────────────────────────────────────────────────
+let currentTab = 'chat';
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.tab-panel').forEach(p => {
+    p.classList.toggle('active', p.id === tab + '-tab');
+    p.style.display = p.id === tab + '-tab' ? 'flex' : 'none';
+  });
+
+  if (tab === 'prompts') loadPromptsV2();
+  else if (tab === 'materials') { loadMaterialSources(); loadMaterials(); }
+}
+
+// ─── Multi-source model loading ───────────────────────────────────────────────
+let allSourceModels = [];
+let modelRoutes = {};
+let routeSources = [];
+
+async function loadAllModels() {
+  const list = document.getElementById('model-list');
+  list.innerHTML = '<li class="loading">加载中…</li>';
+  setStatus('', '正在获取所有平台模型…');
+  try {
+    const r = await fetch('/models/catalog');
+    const d = await r.json();
+    if (!r.ok) { setStatus('err', '获取失败'); return; }
+    allSourceModels = (d.models || []).sort((a, b) => a.id.localeCompare(b.id));
+    renderModels(allSourceModels);
+    const platformCount = new Set(allSourceModels.flatMap(m => (m.platforms || []).map(p => p.sourceId))).size;
+    setStatus('ok', `已连接，${allSourceModels.length} 个模型 / ${platformCount} 个平台`);
+  } catch (e) {
+    setStatus('err', '错误: ' + e.message);
+  }
+}
+
+function renderModels(models) {
+  const list = document.getElementById('model-list');
+  selectedLi = null;
+  if (!models.length) { list.innerHTML = '<li class="loading">无匹配模型</li>'; return; }
+  list.innerHTML = models.map(m => {
+    const sel = selectedModel === m.id ? ' selected' : '';
+    const platforms = (m.platforms || []).map(p => p.sourceName || p.sourceId).filter(Boolean);
+    const health = m.health || (m.platforms || [])[0]?.health || 'unknown';
+    const healthText = health === 'healthy' ? '健康' : health === 'degraded' ? '降级' : health === 'circuit_open' ? '熔断' : '未知';
+    const preferred = m.preferredSourceName || '自动路由';
+    const title = `${m.id} / ${platforms.join(' → ') || '无平台'} / 优先：${preferred}`;
+    return `<li data-id="${escAttr(m.id)}" class="${sel}" title="${escAttr(title)}">
+      <div class="model-card-title">${escHtml(m.displayName || m.id)}</div>
+      <div class="model-card-meta">
+        <span class="model-pill">${escHtml(m.platformCount || platforms.length || 0)} 平台</span>
+        <span class="model-pill">${escHtml(healthText)}</span>
+        <span class="model-pill">优先：${escHtml(preferred)}</span>
+      </div>
+    </li>`;
+  }).join('');
+  if (selectedModel) {
+    selectedLi = list.querySelector(`li[data-id="${CSS.escape(selectedModel)}"]`);
+  }
+}
+
+function filterModels(kw) {
+  const k = kw.toLowerCase().trim();
+  renderModels(k ? allSourceModels.filter(m => m.id.toLowerCase().includes(k) || (m.displayName || '').toLowerCase().includes(k) || (m.platforms || []).some(p => (p.sourceName || p.sourceId || '').toLowerCase().includes(k))) : allSourceModels);
+}
+
+// Legacy single-source loader (kept for compat)
+async function loadModels() { loadAllModels(); }
+
+// ─── Prompt workspace ──────────────────────────────────────────────────────────
+let promptsV2 = [];
+
+async function loadPromptsV2() {
+  try {
+    const d = await fetch('/prompts/v2').then(r => r.json());
+    promptsV2 = d.prompts || [];
+    renderPromptListV2(promptsV2);
+    renderPromptTagFilters();
+  } catch { promptsV2 = []; renderPromptListV2([]); }
+}
+
+function renderPromptListV2(list) {
+  const el = document.getElementById('prompt-list-v2');
+  if (!list.length) { el.innerHTML = '<div style="color:#475569;padding:8px">暂无 Prompt</div>'; return; }
+  el.innerHTML = list.map(p => {
+    const tags = (p.tags || []).slice(0, 3).map(t => `<span style="background:#312e81;color:#c4b5fd;padding:1px 5px;border-radius:4px;font-size:10px">${escHtml(t)}</span>`).join(' ');
+    return `<div class="prompt-item" data-pid="${escAttr(p.id)}" onclick="viewPrompt('${escAttr(p.id)}')">
+      <div style="font-size:12px;color:#c4b5fd;margin-bottom:3px">${escHtml(p.name)}</div>
+      <div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:3px">${tags}</div>
+      <div style="font-size:10px;color:#475569">v${p.version} · 使用${p.stats?.useCount || 0}次</div>
+    </div>`;
+  }).join('');
+}
+
+function renderPromptTagFilters() {
+  const allTags = [...new Set(promptsV2.flatMap(p => p.tags || []))];
+  const el = document.getElementById('prompt-tag-filters');
+  el.innerHTML = allTags.map(t => `<button class="secondary" style="padding:2px 6px;font-size:10px" onclick="togglePromptTag('${escAttr(t)}')">${escHtml(t)}</button>`).join('');
+}
+
+let activePromptTag = null;
+function togglePromptTag(tag) {
+  activePromptTag = activePromptTag === tag ? null : tag;
+  const filtered = activePromptTag ? promptsV2.filter(p => (p.tags || []).includes(activePromptTag)) : promptsV2;
+  renderPromptListV2(filtered);
+}
+
+function filterPromptList() {
+  const kw = document.getElementById('prompt-search').value.toLowerCase().trim();
+  const filtered = kw ? promptsV2.filter(p => p.name.toLowerCase().includes(kw) || p.content.toLowerCase().includes(kw) || (p.tags || []).some(t => t.toLowerCase().includes(kw))) : promptsV2;
+  renderPromptListV2(activePromptTag ? filtered.filter(p => (p.tags || []).includes(activePromptTag)) : filtered);
+}
+
+async function viewPrompt(id) {
+  const p = promptsV2.find(x => x.id === id);
+  if (!p) return;
+  const detail = document.getElementById('prompt-detail-inner');
+  const vars = (p.variables || []).map(v => `<div class="var-row"><span class="var-key">${escHtml(v.key)}</span><span class="var-desc">${escHtml(v.desc)}</span>${v.required ? '<span style="color:#f87171;font-size:10px">必填</span>' : ''}</div>`).join('');
+  const versions = (p.versions || []).map(v => `<div class="ver-item"><span style="color:#818cf8">v${v.v}</span> <span style="color:#475569;font-size:10px">${escHtml(v.updatedAt?.slice(0, 10) || '')}</span> ${escHtml(v.note || '')}</div>`).join('');
+  detail.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <div style="font-size:16px;color:#c4b5fd;flex:1">${escHtml(p.name)}</div>
+      <button class="secondary" style="font-size:12px" onclick="applyPromptToChat('${escAttr(p.id)}')">应用到聊天</button>
+      <button class="secondary" style="font-size:12px" onclick="editPrompt('${escAttr(p.id)}')">编辑</button>
+      <button style="font-size:12px;background:#7f1d1d" onclick="deletePrompt('${escAttr(p.id)}')">删除</button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      ${(p.tags || []).map(t => `<span style="background:#312e81;color:#c4b5fd;padding:2px 8px;border-radius:5px;font-size:12px">${escHtml(t)}</span>`).join('')}
+      ${(p.category || []).map(c => `<span style="background:#1e2235;color:#94a3b8;padding:2px 8px;border-radius:5px;font-size:12px">${escHtml(c)}</span>`).join('')}
+    </div>
+    ${vars ? `<div style="margin-bottom:12px"><div class="section-title" style="margin-bottom:6px">变量</div>${vars}</div>` : ''}
+    <div style="margin-bottom:12px"><div class="section-title" style="margin-bottom:6px">内容</div>
+      <div style="background:#1e2235;border-radius:8px;padding:12px;font-size:13px;line-height:1.6;white-space:pre-wrap;color:#e2e8f0">${escHtml(p.content)}</div>
+    </div>
+    ${versions ? `<div style="margin-bottom:12px"><div class="section-title" style="margin-bottom:6px">版本历史</div>${versions}</div>` : ''}
+  `;
+}
+
+async function applyPromptToChat(id) {
+  const p = promptsV2.find(x => x.id === id);
+  if (!p) return;
+  switchTab('chat');
+  if (p.variables?.length > 0) {
+    const filled = prompt(p.name + ' - 填充变量（格式：key1=value1; key2=value2）', p.variables.map(v => `${v.key}=`).join('; '));
+    if (filled) {
+      let content = p.content;
+      for (const kv of filled.split(';')) {
+        const [k, ...rest] = kv.split('=');
+        content = content.replaceAll(k.trim(), rest.join('=').trim());
+      }
+      document.getElementById('system-prompt').value = content;
+    }
+  } else {
+    document.getElementById('system-prompt').value = p.content;
+  }
+  p.stats = p.stats || { useCount: 0, avgScore: 0, lastUsed: null };
+  p.stats.useCount++;
+  p.stats.lastUsed = new Date().toISOString();
+  await fetch(`/prompts/v2/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ stats: p.stats }) });
+}
+
+function openPromptEditor(id) {
+  const p = id ? promptsV2.find(x => x.id === id) : null;
+  const isNew = !id;
+  const name = isNew ? '' : (p?.name || '');
+  const content = isNew ? '' : (p?.content || '');
+  const vars = isNew ? [] : (p?.variables || []);
+  const tags = isNew ? [] : (p?.tags || []);
+
+  const detail = document.getElementById('prompt-detail-inner');
+  detail.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <div style="font-size:16px;color:#c4b5fd">${isNew ? '新建 Prompt' : '编辑 Prompt'}</div>
+      <div style="flex:1"></div>
+      <button class="secondary" style="font-size:12px" onclick="viewPrompt('${isNew ? '' : escAttr(id)}')">取消</button>
+      <button style="font-size:12px" onclick="savePromptFromEditor('${isNew ? '' : escAttr(id)}')">保存</button>
+    </div>
+    <div class="cfg-row" style="margin-bottom:10px">
+      <label style="font-size:11px;color:#94a3b8">名称</label>
+      <input type="text" id="pe-name" value="${escAttr(name)}" style="width:100%">
+    </div>
+    <div class="cfg-row" style="margin-bottom:10px">
+      <label style="font-size:11px;color:#94a3b8">标签（逗号分隔）</label>
+      <input type="text" id="pe-tags" value="${escAttr((tags).join(', '))}" style="width:100%" placeholder="断亲,打脸,逆袭">
+    </div>
+    <div id="pe-vars" style="margin-bottom:10px">
+      <div class="section-title" style="margin-bottom:6px;display:flex;align-items:center;justify-content:space-between">
+        <span>变量</span>
+        <button class="secondary" style="padding:1px 6px;font-size:10px" onclick="peAddVar()">+ 添加变量</button>
+      </div>
+    </div>
+    <div class="cfg-row" style="margin-bottom:10px">
+      <label style="font-size:11px;color:#94a3b8">内容</label>
+      <textarea id="pe-content" style="width:100%;height:200px;font-size:13px;line-height:1.6" placeholder="输入 prompt 内容…" oninput="peUpdateVars()">${escHtml(content)}</textarea>
+    </div>
+  `;
+  // Render existing vars
+  for (const v of vars) peAddVar(v);
+  if (vars.length === 0) peAddVar();
+}
+
+function peAddVar(existing) {
+  const el = document.getElementById('pe-vars');
+  const idx = el.querySelectorAll('.var-edit-row').length;
+  const div = document.createElement('div');
+  div.className = 'var-edit-row';
+  div.style.cssText = 'display:flex;gap:4px;margin-bottom:3px;align-items:center';
+  div.innerHTML = `
+    <input type="text" class="ve-key" placeholder="{{变量名}}" value="${escAttr(existing?.key || '')}" style="flex:1;font-size:11px">
+    <input type="text" class="ve-desc" placeholder="描述" value="${escAttr(existing?.desc || '')}" style="flex:1;font-size:11px">
+    <input type="checkbox" class="ve-required" ${(existing?.required) ? 'checked' : ''} style="width:14px;height:14px">
+    <span style="font-size:10px;color:#64748b">必填</span>
+    <button style="background:transparent;border:none;color:#64748b;font-size:14px;cursor:pointer;padding:0 3px" onclick="this.closest('.var-edit-row').remove()">×</button>
+  `;
+  el.appendChild(div);
+}
+
+function peUpdateVars() {
+  const content = document.getElementById('pe-content').value;
+  const matches = [...content.matchAll(/\{\{([^}]+)\}\}/g)].map(m => m[1].trim());
+  const existingRows = document.querySelectorAll('.var-edit-row');
+  const existingKeys = new Set([...existingRows].map(r => r.querySelector('.ve-key').value.trim()).filter(Boolean));
+  for (const key of matches) {
+    if (!existingKeys.has('{{' + key + '}}')) peAddVar({ key: '{{' + key + '}}', desc: '', required: false });
+  }
+}
+
+async function savePromptFromEditor(id) {
+  const name = document.getElementById('pe-name').value.trim();
+  const content = document.getElementById('pe-content').value.trim();
+  const tagsRaw = document.getElementById('pe-tags').value;
+  const tags = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+  const varRows = document.querySelectorAll('.var-edit-row');
+  const variables = [...varRows].map(r => ({
+    key: r.querySelector('.ve-key').value.trim(),
+    desc: r.querySelector('.ve-desc').value.trim(),
+    required: r.querySelector('.ve-required').checked,
+  })).filter(v => v.key);
+  const payload = { name, content, tags, variables };
+  if (!name || !content) { alert('名称和内容不能为空'); return; }
+  try {
+    if (id) {
+      await fetch(`/prompts/v2/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    } else {
+      await fetch('/prompts/v2', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    }
+    await loadPromptsV2();
+    viewPrompt(id || promptsV2[0]?.id || '');
+  } catch (e) { alert('保存失败: ' + e.message); }
+}
+
+function editPrompt(id) { openPromptEditor(id); }
+
+async function deletePrompt(id) {
+  if (!confirm('删除这个 Prompt？')) return;
+  await fetch(`/prompts/v2/${id}`, { method: 'DELETE' });
+  await loadPromptsV2();
+  document.getElementById('prompt-detail-inner').innerHTML = '<div style="color:#475569;font-size:13px;text-align:center;padding-top:60px">← 选择左侧 Prompt 查看详情</div>';
+}
+
+async function exportPrompts() {
+  const r = await fetch('/prompts/export');
+  const blob = await r.blob();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'prompts.json';
+  a.click();
+}
+
+async function importPromptsFile(file) {
+  if (!file) return;
+  const text = await file.text();
+  try {
+    const d = JSON.parse(text);
+    await fetch('/prompts/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: text });
+    await loadPromptsV2();
+  } catch (e) { alert('导入失败: ' + e.message); }
+}
+
+// ─── Materials ────────────────────────────────────────────────────────────────
+let matSources = [];
+let allMaterials = [];
+
+async function loadMaterialSources() {
+  try {
+    const d = await fetch('/materials/sources').then(r => r.json());
+    matSources = d.sources || [];
+  } catch {}
+}
+
+async function loadMaterials() {
+  const kw = document.getElementById('mat-search').value.toLowerCase().trim();
+  try {
+    const url = kw ? `/materials/search?q=${encodeURIComponent(kw)}` : '/materials';
+    const d = await fetch(url).then(r => r.json());
+    allMaterials = (d.results || d.materials || []);
+    renderMatList(allMaterials);
+    loadMatStats();
+    renderMatTagFilters();
+  } catch { allMaterials = []; renderMatList([]); }
+}
+
+function renderMatList(list) {
+  const el = document.getElementById('mat-list');
+  if (!list.length) { el.innerHTML = '<div style="color:#475569;padding:8px">暂无素材</div>'; return; }
+  el.innerHTML = list.map(m => {
+    const src = matSources.find(s => s.id === m.sourceId);
+    const tags = (m.tags || []).slice(0, 3).map(t => `<span style="background:#312e81;color:#c4b5fd;padding:1px 4px;border-radius:3px;font-size:10px">${escHtml(t)}</span>`).join(' ');
+    const dt = m.updatedAt ? m.updatedAt.slice(0, 10) : '';
+    return `<div class="mat-item" onclick="viewMaterial('${escAttr(m.id)}')" style="padding:8px;cursor:pointer;border-bottom:1px solid #1e2235">
+      <div style="font-size:12px;color:#c4b5fd;margin-bottom:3px">${escHtml(m.title)}</div>
+      <div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:3px">${tags}</div>
+      <div style="font-size:10px;color:#475569">${escHtml(src?.platform || '')} ${dt ? '· ' + dt : ''}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderMatTagFilters() {
+  const allTags = [...new Set(allMaterials.flatMap(m => m.tags || []))];
+  const el = document.getElementById('mat-tag-filters');
+  el.innerHTML = allTags.map(t => `<button class="secondary" style="padding:2px 6px;font-size:10px" onclick="toggleMatTag('${escAttr(t)}')">${escHtml(t)}</button>`).join('');
+}
+
+let activeMatTag = null;
+function toggleMatTag(tag) {
+  activeMatTag = activeMatTag === tag ? null : tag;
+  const filtered = activeMatTag ? allMaterials.filter(m => (m.tags || []).includes(activeMatTag)) : allMaterials;
+  renderMatList(filtered);
+}
+
+async function loadMatStats() {
+  try {
+    const d = await fetch('/materials/stats').then(r => r.json());
+    const el = document.getElementById('mat-stats-bar');
+    el.innerHTML = `<span>共 ${d.total} 条</span><span>近7天 +${d.recentlyAdded}</span>`;
+  } catch {}
+}
+
+async function searchMaterials() { loadMaterials(); }
+
+async function quickAddMaterial() {
+  const title = document.getElementById('mat-quick-title').value.trim();
+  if (!title) return;
+  document.getElementById('mat-quick-title').value = '';
+  openMaterialEditor(null, { title });
+}
+
+async function viewMaterial(id) {
+  const m = allMaterials.find(x => x.id === id);
+  if (!m) return;
+  const src = matSources.find(s => s.id === m.sourceId);
+  const detail = document.getElementById('mat-detail-inner');
+  const features = m.extractedFeatures || {};
+  const linked = (m.linkedPrompts || []).map(pid => {
+    const p = promptsV2.find(x => x.id === pid);
+    return p ? `<span style="background:#312e81;color:#c4b5fd;padding:2px 8px;border-radius:5px;font-size:12px;cursor:pointer" onclick="applyPromptToChat('${escAttr(pid)}')">${escHtml(p.name)}</span>` : '';
+  }).join('');
+  detail.innerHTML = `
+    <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <div style="flex:1">
+        <div style="font-size:16px;color:#c4b5fd;margin-bottom:4px">${escHtml(m.title)}</div>
+        <div style="font-size:11px;color:#64748b">${escHtml(src?.platform || '')} ${m.url ? ' · <a href="'+escAttr(m.url)+'" target="_blank" style="color:#818cf8">链接</a>' : ''}</div>
+      </div>
+      <button class="secondary" style="font-size:12px" onclick="editMaterial('${escAttr(id)}')">编辑</button>
+      <button style="font-size:12px;background:#7f1d1d" onclick="deleteMaterial('${escAttr(id)}')">删除</button>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+      ${(m.tags || []).map(t => `<span style="background:#312e81;color:#c4b5fd;padding:2px 8px;border-radius:5px;font-size:12px">${escHtml(t)}</span>`).join('')}
+    </div>
+    ${m.summary ? `<div style="margin-bottom:12px;padding:10px;background:#1e2235;border-radius:8px;font-size:13px;color:#94a3b8;border-left:3px solid #4f46e5">摘要：${escHtml(m.summary)}</div>` : ''}
+    ${m.content ? `<div style="margin-bottom:12px"><div class="section-title" style="margin-bottom:6px">正文</div><div style="background:#1e2235;border-radius:8px;padding:12px;font-size:13px;line-height:1.7;max-height:300px;overflow-y:auto;white-space:pre-wrap">${escHtml(m.content)}</div></div>` : ''}
+    <div style="margin-bottom:12px"><div class="section-title" style="margin-bottom:6px">提取特征</div>
+      <div style="background:#1e2235;border-radius:8px;padding:12px;font-size:12px;line-height:1.8">
+        ${features.genre ? `<div><span style="color:#64748b">类型：</span><span style="color:#c4b5fd">${escHtml(features.genre)}</span></div>` : ''}
+        ${features.pacing ? `<div><span style="color:#64748b">节奏：</span><span>${escHtml(features.pacing)}</span></div>` : ''}
+        ${features.openingHook ? `<div><span style="color:#64748b">开篇：</span><span>${escHtml(features.openingHook)}</span></div>` : ''}
+        ${features.structure ? `<div><span style="color:#64748b">结构：</span><span>${escHtml(features.structure)}</span></div>` : ''}
+        ${!features.genre && !features.pacing && !features.openingHook && !features.structure ? '<span style="color:#475569">暂无分析特征，<button class="secondary" style="font-size:11px;padding:2px 8px" onclick="analyzeMaterial(\'' + id + '\')">点击 AI 分析</button></span>' : ''}
+      </div>
+    </div>
+    ${m.analysisNotes ? `<div style="margin-bottom:12px"><div class="section-title" style="margin-bottom:6px">分析笔记</div><div style="background:#1e2235;border-radius:8px;padding:12px;font-size:13px;white-space:pre-wrap">${escHtml(m.analysisNotes)}</div></div>` : ''}
+    ${linked ? `<div style="margin-bottom:12px"><div class="section-title" style="margin-bottom:6px">关联 Prompt</div><div style="display:flex;gap:6px;flex-wrap:wrap">${linked}</div></div>` : ''}
+    ${m.content && !m.extractedFeatures ? `<button style="font-size:12px" onclick="analyzeMaterial('${escAttr(id)}')">🤖 AI 分析素材</button>` : ''}
+  `;
+}
+
+async function analyzeMaterial(id) {
+  const detail = document.getElementById('mat-detail-inner');
+  const orig = detail.innerHTML;
+  detail.innerHTML = '<div style="color:#818cf8;font-size:13px;padding:12px">🤖 正在分析，请稍候…</div>';
+  try {
+    const r = await fetch(`/materials/${id}/analyze`, { method: 'POST' });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || '分析失败');
+    await loadMaterials();
+    await viewMaterial(id);
+  } catch (e) {
+    detail.innerHTML = orig + `<div style="color:#f87171;font-size:12px;margin-top:8px">分析失败: ${escHtml(e.message)}</div>`;
+  }
+}
+
+function openMaterialEditor(id, defaults) {
+  const m = id ? allMaterials.find(x => x.id === id) : null;
+  const isNew = !id && !defaults?.id;
+  const detail = document.getElementById('mat-detail-inner');
+  const title = m?.title || defaults?.title || '';
+  const content = m?.content || '';
+  const summary = m?.summary || '';
+  const tags = (m?.tags || []).join(', ');
+  const analysisNotes = m?.analysisNotes || '';
+  detail.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <div style="font-size:16px;color:#c4b5fd">${isNew ? '新增素材' : '编辑素材'}</div>
+      <div style="flex:1"></div>
+      <button class="secondary" style="font-size:12px" onclick="viewMaterial('${isNew ? '' : escAttr(id)}')">取消</button>
+      <button style="font-size:12px" onclick="saveMaterialFromEditor('${isNew ? '' : escAttr(id)}')">保存</button>
+    </div>
+    <div class="cfg-row" style="margin-bottom:8px">
+      <label style="font-size:11px;color:#94a3b8">标题 *</label>
+      <input type="text" id="me-title" value="${escAttr(title)}" style="width:100%">
+    </div>
+    <div class="cfg-row" style="margin-bottom:8px">
+      <label style="font-size:11px;color:#94a3b8">来源平台</label>
+      <select id="me-source" style="width:100%;background:#0f1117;border:1px solid #2d3148;border-radius:6px;color:#e2e8f0;padding:5px">
+        <option value="">-- 选择平台 --</option>
+        ${matSources.map(s => `<option value="${escAttr(s.id)}">${escHtml(s.name + ' (' + s.platform + ')')}</option>`).join('')}
+      </select>
+    </div>
+    <div class="cfg-row" style="margin-bottom:8px">
+      <label style="font-size:11px;color:#94a3b8">标签（逗号分隔）</label>
+      <input type="text" id="me-tags" value="${escAttr(tags)}" style="width:100%">
+    </div>
+    <div class="cfg-row" style="margin-bottom:8px">
+      <label style="font-size:11px;color:#94a3b8">正文</label>
+      <textarea id="me-content" style="width:100%;height:180px;font-size:13px;line-height:1.6" placeholder="粘贴素材正文…">${escHtml(content)}</textarea>
+    </div>
+    <div class="cfg-row" style="margin-bottom:8px">
+      <label style="font-size:11px;color:#94a3b8">摘要</label>
+      <input type="text" id="me-summary" value="${escAttr(summary)}" style="width:100%">
+    </div>
+    <div class="cfg-row" style="margin-bottom:8px">
+      <label style="font-size:11px;color:#94a3b8">分析笔记</label>
+      <textarea id="me-notes" style="width:100%;height:80px;font-size:13px">${escHtml(analysisNotes)}</textarea>
+    </div>
+  `;
+  if (m?.sourceId) document.getElementById('me-source').value = m.sourceId;
+}
+
+function editMaterial(id) { openMaterialEditor(id); }
+
+async function saveMaterialFromEditor(id) {
+  const payload = {
+    title: document.getElementById('me-title').value.trim(),
+    content: document.getElementById('me-content').value.trim(),
+    summary: document.getElementById('me-summary').value.trim(),
+    tags: document.getElementById('me-tags').value.split(',').map(t => t.trim()).filter(Boolean),
+    analysisNotes: document.getElementById('me-notes').value.trim(),
+    sourceId: document.getElementById('me-source').value || null,
+  };
+  if (!payload.title) { alert('标题不能为空'); return; }
+  try {
+    if (id) {
+      await fetch(`/materials/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    } else {
+      const r = await fetch('/materials', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const d = await r.json();
+      id = d.id;
+    }
+    await loadMaterials();
+    viewMaterial(id);
+  } catch (e) { alert('保存失败: ' + e.message); }
+}
+
+async function deleteMaterial(id) {
+  if (!confirm('删除这条素材？')) return;
+  await fetch(`/materials/${id}`, { method: 'DELETE' });
+  await loadMaterials();
+  document.getElementById('mat-detail-inner').innerHTML = '<div style="color:#475569;font-size:13px;text-align:center;padding-top:60px">← 选择左侧素材查看详情</div>';
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+(async () => {
+  try {
+    const d = await fetch('/config').then(r => r.json());
+    if (d.baseUrl && d.hasKey) { setStatus('ok', '已配置，正在加载模型…'); loadModels(); }
+    else setStatus('', '请配置 API Key 和 Base URL');
+  } catch { setStatus('err', '无法连接服务器'); }
+
+  loadPromptTemplates();
+
+  const list = await loadSessionList();
+  if (list.length > 0) {
+    await switchSession(list[0].id);
+  } else {
+    await newSession();
+  }
+})();
+</script>
+</body>
+</html>

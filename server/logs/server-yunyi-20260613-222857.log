@@ -1,0 +1,8 @@
+Model Runner 运行  http://localhost:4000
+API 端点：POST http://localhost:4000/chat
+[health] ⚠️  yunyi degraded（连续1次失败）
+[health] 🔴 yunyi 熔断开启（连续2次失败）
+[health] 🔴 yunyi 熔断开启（连续3次失败）
+GET /health
+[health] 🔴 yunyi 熔断开启（连续4次失败）
+[health] 🔴 yunyi 熔断开启（连续5次失败）

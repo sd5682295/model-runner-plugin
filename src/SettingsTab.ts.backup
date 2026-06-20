@@ -1,0 +1,338 @@
+import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
+import type ModelRunnerPlugin from './main';
+import { AddSourceModal, EditSourceModal } from './SourceModals';
+import { ManageKeysModal } from './ManageKeysModal';
+
+export class ModelRunnerSettingTab extends PluginSettingTab {
+  plugin: ModelRunnerPlugin;
+  private activeTab: string = 'sources';
+
+  constructor(app: App, plugin: ModelRunnerPlugin) {
+    super(app, plugin);
+    this.plugin = plugin;
+  }
+
+  display(): void {
+    const { containerEl } = this;
+    containerEl.empty();
+
+    containerEl.createEl('h2', { text: 'AI 服务配置中心' });
+
+    // Tab 导航
+    const tabContainer = containerEl.createDiv({ cls: 'model-runner-tabs' });
+    const tabButtons = tabContainer.createDiv({ cls: 'tab-buttons' });
+
+    const tabs = [
+      { id: 'sources', name: '🌐 源管理' },
+      { id: 'models', name: '🎯 模型管理' },
+      { id: 'services', name: '🔧 服务管理' },
+      { id: 'monitor', name: '📊 状态监控' },
+    ];
+
+    tabs.forEach((tab) => {
+      const button = tabButtons.createEl('button', {
+        text: tab.name,
+        cls: this.activeTab === tab.id ? 'tab-button active' : 'tab-button',
+      });
+      button.onclick = () => {
+        this.activeTab = tab.id;
+        this.display();
+      };
+    });
+
+    // Tab 内容容器
+    const tabContent = containerEl.createDiv({ cls: 'tab-content' });
+
+    // 渲染对应的 Tab 内容
+    switch (this.activeTab) {
+      case 'sources':
+        this.renderSourcesTab(tabContent);
+        break;
+      case 'models':
+        this.renderModelsTab(tabContent);
+        break;
+      case 'services':
+        this.renderServicesTab(tabContent);
+        break;
+      case 'monitor':
+        this.renderMonitorTab(tabContent);
+        break;
+    }
+  }
+
+  private renderSourcesTab(containerEl: HTMLElement): void {
+    containerEl.createEl('h3', { text: '🌐 源管理' });
+
+    const desc = containerEl.createDiv({ cls: 'setting-item-description' });
+    desc.setText('管理所有 API 源的配置，包括 URL、Keys、模型和成本信息。');
+
+    // 当前源选择
+    this.renderCurrentSourceSelector(containerEl);
+
+    // 源列表
+    this.renderSourcesList(containerEl);
+
+    // 添加新源按钮
+    new Setting(containerEl).addButton((button) =>
+      button
+        .setButtonText('➕ 添加新源')
+        .setCta()
+        .onClick(() => {
+          this.showAddSourceModal();
+        })
+    );
+  }
+
+  private renderModelsTab(containerEl: HTMLElement): void {
+    containerEl.createEl('h3', { text: '🎯 模型管理' });
+    containerEl.createDiv({ text: '功能开发中...' });
+  }
+
+  private renderServicesTab(containerEl: HTMLElement): void {
+    containerEl.createEl('h3', { text: '🔧 服务管理' });
+    containerEl.createDiv({ text: '功能开发中...' });
+  }
+
+  private renderMonitorTab(containerEl: HTMLElement): void {
+    containerEl.createEl('h3', { text: '📊 状态监控' });
+    containerEl.createDiv({ text: '功能开发中...' });
+  }
+
+  private renderCurrentSourceSelector(containerEl: HTMLElement): void {
+    const config = this.plugin.configManager?.getConfig();
+    if (!config) {
+      const notice = containerEl.createDiv({ cls: 'mod-warning' });
+      notice.setText('⚠️ 配置未加载，请先启动服务器');
+      return;
+    }
+
+    const currentSourceId = config.activeSourceId;
+
+    new Setting(containerEl)
+      .setName('当前源')
+      .setDesc('选择当前使用的 API 源')
+      .addDropdown((dropdown) => {
+        config.sources.forEach((source) => {
+          dropdown.addOption(source.id, source.name);
+        });
+        dropdown.setValue(currentSourceId).onChange(async (value) => {
+          try {
+            await this.plugin.configManager?.switchSource(value);
+            const sourceName = config.sources.find(s => s.id === value)?.name || value;
+            new Notice('✅ 已切换到: ' + sourceName);
+            // 刷新侧边栏显示
+            this.plugin.view?.refreshConfig();
+          } catch (error) {
+            new Notice('❌ 切换失败: ' + error);
+          }
+        });
+      });
+  }
+
+  private renderSourcesList(containerEl: HTMLElement): void {
+    const config = this.plugin.configManager?.getConfig();
+    if (!config) return;
+
+    const sourcesContainer = containerEl.createDiv({ cls: 'model-runner-sources' });
+
+    config.sources.forEach((source) => {
+      const sourceItem = sourcesContainer.createDiv({ cls: 'source-item' });
+
+      // 源信息头部
+      const sourceHeader = sourceItem.createDiv({ cls: 'source-header' });
+      const sourceName = sourceHeader.createDiv({ cls: 'source-name' });
+      sourceName.setText(source.name);
+
+      if (source.id === config.activeSourceId) {
+        sourceName.createSpan({ text: ' (当前)', cls: 'source-current-badge' });
+      }
+
+      // 源详细信息
+      const sourceDetails = sourceItem.createDiv({ cls: 'source-details' });
+
+      // Base URL
+      const urlRow = sourceDetails.createDiv({ cls: 'source-detail-row' });
+      urlRow.createSpan({ text: '🔗 ', cls: 'source-detail-icon' });
+      urlRow.createSpan({ text: 'URL: ', cls: 'source-detail-label' });
+      urlRow.createSpan({ text: source.baseUrl, cls: 'source-detail-value' });
+
+      // API Keys 数量
+      const keysRow = sourceDetails.createDiv({ cls: 'source-detail-row' });
+      keysRow.createSpan({ text: '🔑 ', cls: 'source-detail-icon' });
+      keysRow.createSpan({ text: 'Keys: ', cls: 'source-detail-label' });
+      keysRow.createSpan({
+        text: `${source.apiKeys?.length || 0} 个`,
+        cls: 'source-detail-value'
+      });
+
+      // 操作按钮
+      const sourceActions = sourceItem.createDiv({ cls: 'source-actions' });
+
+      // 管理 Keys 按钮
+      const keysBtn = sourceActions.createEl('button', {
+        text: '🔑 管理 Keys',
+      });
+      keysBtn.onclick = () => {
+        new ManageKeysModal(this.app, this.plugin, source.id, source.name).open();
+      };
+
+      // 编辑按钮
+      const editBtn = sourceActions.createEl('button', {
+        text: '✏️ 编辑',
+      });
+      editBtn.onclick = () => {
+        this.showEditSourceModal(source.id, source);
+      };
+
+      // 删除按钮
+      const deleteBtn = sourceActions.createEl('button', {
+        text: '🗑️ 删除',
+        cls: 'mod-warning',
+      });
+      deleteBtn.onclick = async () => {
+        if (source.id === config.activeSourceId) {
+          new Notice('❌ 无法删除当前使用的源');
+          return;
+        }
+
+        const confirmed = confirm(`确定要删除源 "${source.name}" 吗？`);
+        if (confirmed) {
+          try {
+            await this.plugin.configManager?.deleteSource(source.id);
+            new Notice('✅ 已删除: ' + source.name);
+            this.display(); // 刷新显示
+          } catch (error) {
+            new Notice('❌ 删除失败: ' + error);
+          }
+        }
+      };
+    });
+  }
+
+      const sourceDetails = sourceInfo.createDiv({ cls: 'source-details' });
+      sourceDetails.createSpan({ text: `ID: ${source.id}`, cls: 'source-detail' });
+      sourceDetails.createSpan({ text: ` | `, cls: 'source-separator' });
+      sourceDetails.createSpan({
+        text: `URL: ${source.baseUrl}`,
+        cls: 'source-detail',
+      });
+      sourceDetails.createSpan({ text: ` | `, cls: 'source-separator' });
+      sourceDetails.createSpan({
+        text: `API Keys: ${source.apiKeys.length} 个`,
+        cls: 'source-detail',
+      });
+
+      // 操作按钮
+      const sourceActions = sourceItem.createDiv({ cls: 'source-actions' });
+
+      // 管理 Keys 按钮
+      const manageKeysBtn = sourceActions.createEl('button', {
+        text: '管理 Keys',
+        cls: 'mod-cta',
+      });
+      manageKeysBtn.onclick = () => {
+        this.showManageKeysModal(source.id, source.name, source.apiKeys);
+      };
+
+      // 编辑按钮
+      const editBtn = sourceActions.createEl('button', {
+        text: '编辑',
+      });
+      editBtn.onclick = () => {
+        this.showEditSourceModal(source.id, source);
+      };
+
+      // 删除按钮
+      const deleteBtn = sourceActions.createEl('button', {
+        text: '删除',
+        cls: 'mod-warning',
+      });
+      deleteBtn.onclick = async () => {
+        if (source.id === config.activeSourceId) {
+          new Notice('❌ 无法删除当前使用的源');
+          return;
+        }
+
+        const confirmed = confirm(`确定要删除源 "${source.name}" 吗？`);
+        if (confirmed) {
+          try {
+            await this.plugin.configManager?.deleteSource(source.id);
+            new Notice('✅ 已删除: ' + source.name);
+            this.display(); // 刷新显示
+          } catch (error) {
+            new Notice('❌ 删除失败: ' + error);
+          }
+        }
+      };
+    });
+  }
+
+  private showManageKeysModal(sourceId: string, sourceName: string, apiKeys: string[]): void {
+    new ManageKeysModal(
+      this.app,
+      this.plugin,
+      sourceId,
+      sourceName,
+      apiKeys,
+      async (newKeys) => {
+        try {
+          const config = this.plugin.configManager?.getConfig();
+          if (!config) {
+            new Notice('❌ 配置未加载');
+            return;
+          }
+
+          const source = config.sources.find((s) => s.id === sourceId);
+          if (!source) {
+            new Notice('❌ 源不存在');
+            return;
+          }
+
+          // 更新 API Keys
+          source.apiKeys = newKeys;
+          await this.plugin.configManager?.save(config);
+
+          new Notice('✅ 已更新 Keys: ' + sourceName);
+          this.display(); // 刷新显示
+        } catch (error) {
+          new Notice('❌ 更新失败: ' + error);
+        }
+      }
+    ).open();
+  }
+
+  private showAddSourceModal(): void {
+    new AddSourceModal(this.app, this.plugin, async (data) => {
+      try {
+        await this.plugin.configManager?.addSource({
+          id: data.name.toLowerCase().replace(/[^a-z0-9]/g, ''), // 生成 ID
+          name: data.name,
+          baseUrl: data.baseURL,
+          apiKey: data.apiKey,
+        });
+
+        new Notice("✅ 已添加源: " + data.name);
+        this.display(); // 刷新显示
+      } catch (error) {
+        new Notice("❌ 添加失败: " + error);
+      }
+    }).open();
+  }
+
+  private showEditSourceModal(sourceId: string, source: any): void {
+    new EditSourceModal(this.app, this.plugin, source.name, source, async (data) => {
+      try {
+        await this.plugin.configManager?.updateSource(sourceId, {
+          name: data.name || undefined,
+          baseUrl: data.baseURL || undefined,
+          apiKey: data.apiKey || undefined,
+        });
+
+        new Notice('✅ 已更新源: ' + source.name);
+        this.display(); // 刷新显示
+      } catch (error) {
+        new Notice('❌ 更新失败: ' + error);
+      }
+    }).open();
+  }
+}

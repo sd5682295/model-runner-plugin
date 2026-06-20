@@ -1,8 +1,590 @@
-/*
+/* Model Runner Plugin Styles */
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.model-runner-container {
+  padding: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
 
-If your plugin does not need CSS, delete this file.
+.model-runner-header h4 {
+  margin: 0 0 12px 0;
+  font-size: 1.2em;
+}
 
-*/
+.model-runner-btn-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.model-runner-btn-row button {
+  flex: 1;
+  min-width: 80px;
+  padding: 8px 12px;
+}
+
+.model-runner-config {
+  padding: 12px;
+  margin-bottom: 16px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--background-secondary);
+}
+
+.model-runner-config h5 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 1em;
+}
+
+.config-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  padding: 4px 0;
+}
+
+.config-label {
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.config-tip {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.mod-warning {
+  color: var(--text-warning);
+}
+
+.config-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.config-label {
+  font-weight: 500;
+  min-width: 80px;
+}
+
+.config-row select {
+  flex: 1;
+  padding: 4px 8px;
+}
+
+.model-runner-log-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.model-runner-log-section h5 {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.log-controls {
+  margin-bottom: 8px;
+}
+
+.model-runner-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  background: var(--code-background);
+  border-radius: 4px;
+  font-family: var(--font-monospace);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.log-line {
+  margin: 2px 0;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.log-line:hover {
+  background: var(--background-modifier-hover);
+}
+
+/* Setting items in config panel */
+.model-runner-config .setting-item {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.model-runner-config .setting-item:last-of-type {
+  border-bottom: none;
+}
+
+.model-runner-config .setting-item-info {
+  flex: 1;
+}
+
+.model-runner-config .setting-item-name {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.model-runner-config .setting-item-description {
+  font-size: 0.9em;
+  color: var(--text-muted);
+}
+
+.model-runner-config .setting-item-control {
+  display: flex;
+  align-items: center;
+}
+
+.model-runner-config input[type="number"] {
+  padding: 4px 8px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+}
+
+.model-runner-config .checkbox-container {
+  display: flex;
+  align-items: center;
+  width: 44px;
+  height: 24px;
+  background: var(--interactive-normal);
+  border-radius: 12px;
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.2s;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.model-runner-config .checkbox-container::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  left: 2px;
+  top: 2px;
+  transition: left 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.model-runner-config .checkbox-container.is-enabled {
+  background: var(--interactive-accent);
+}
+
+.model-runner-config .checkbox-container.is-enabled::after {
+  left: 22px;  /* 44px - 20px - 2px = 22px */
+}
+
+.config-divider {
+  margin: 12px 0;
+  border: none;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.config-value {
+  color: var(--text-accent);
+}
+
+/* Settings Tab Styles */
+.model-runner-sources {
+  margin-top: 16px;
+}
+
+.source-item {
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-secondary);
+}
+
+.source-item:hover {
+  border-color: var(--interactive-accent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.source-info {
+  margin-bottom: 12px;
+}
+
+.source-name {
+  font-size: 1.1em;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-normal);
+}
+
+.source-current-badge {
+  color: var(--interactive-accent);
+  font-weight: 700;
+  font-size: 0.9em;
+}
+
+.source-details {
+  font-size: 0.9em;
+  color: var(--text-muted);
+}
+
+.source-detail {
+  color: var(--text-muted);
+}
+
+.source-separator {
+  color: var(--background-modifier-border);
+  margin: 0 4px;
+}
+
+.source-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.source-actions button {
+  flex: 1;
+  padding: 6px 12px;
+}
+
+.model-runner-about {
+  padding: 16px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-secondary);
+}
+
+.model-runner-about p {
+  margin: 8px 0;
+}
+
+.model-runner-links {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.model-runner-links a {
+  color: var(--interactive-accent);
+  text-decoration: none;
+}
+
+.model-runner-links a:hover {
+  text-decoration: underline;
+}
+
+/* Tab Navigation */
+.model-runner-tabs {
+  margin-bottom: 24px;
+}
+
+.tab-buttons {
+  display: flex;
+  gap: 8px;
+  border-bottom: 2px solid var(--background-modifier-border);
+  margin-bottom: 16px;
+}
+
+.tab-button {
+  padding: 12px 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  position: relative;
+  bottom: -2px;
+}
+
+.tab-button:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+
+.tab-button.active {
+  color: var(--interactive-accent);
+  border-bottom-color: var(--interactive-accent);
+}
+
+.tab-content {
+  padding: 8px 0;
+}
+
+/* Source Item Details */
+.source-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.source-details {
+  margin-bottom: 12px;
+  padding: 12px;
+  background: var(--background-primary);
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+}
+
+.source-detail-row {
+  display: flex;
+  align-items: center;
+  margin: 6px 0;
+  font-size: 0.9em;
+}
+
+.source-detail-icon {
+  margin-right: 4px;
+}
+
+.source-detail-label {
+  color: var(--text-muted);
+  font-weight: 500;
+  min-width: 60px;
+}
+
+.source-detail-value {
+  color: var(--text-normal);
+  font-family: var(--font-monospace);
+  font-size: 0.95em;
+}
+
+/* Service Cards */
+.model-runner-services {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.service-card {
+  padding: 16px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-secondary);
+  transition: all 0.2s;
+}
+
+.service-card:hover {
+  border-color: var(--interactive-accent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.service-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.service-name {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+
+.service-status {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.85em;
+  font-weight: 500;
+}
+
+.service-status.status-running {
+  background: #10b981;
+  color: white;
+}
+
+.service-status.status-stopped {
+  background: #6b7280;
+  color: white;
+}
+
+.service-status.status-unknown {
+  background: #f59e0b;
+  color: white;
+}
+
+.service-description {
+  color: var(--text-muted);
+  font-size: 0.9em;
+  margin-bottom: 12px;
+}
+
+.service-details {
+  margin: 12px 0;
+  padding: 12px;
+  background: var(--background-primary);
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+}
+
+.service-detail-row {
+  display: flex;
+  align-items: center;
+  margin: 4px 0;
+  font-size: 0.9em;
+}
+
+.service-detail-label {
+  color: var(--text-muted);
+  font-weight: 500;
+  min-width: 60px;
+}
+
+.service-detail-value {
+  color: var(--text-normal);
+  font-family: var(--font-monospace);
+}
+
+.service-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.service-actions button {
+  flex: 1;
+  padding: 6px 12px;
+}
+
+.service-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+
+/* Modal Styles */
+.modal-button-container {
+  display: flex;
+  gap: 8px;
+  margin-top: 24px;
+  justify-content: flex-end;
+}
+
+.modal-button-container button {
+  padding: 8px 16px;
+}
+
+.mod-warning {
+  background: var(--interactive-accent-hover);
+  color: var(--text-on-accent);
+}
+
+.mod-warning:hover {
+  background: var(--interactive-accent);
+}
+
+/* API Keys Management */
+.api-keys-container {
+  margin: 16px 0;
+}
+
+.api-key-item {
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--background-secondary);
+}
+
+.api-key-item:hover {
+  border-color: var(--interactive-accent);
+}
+
+.api-key-info {
+  margin-bottom: 8px;
+}
+
+.api-key-label {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.api-key-value {
+  font-family: var(--font-monospace);
+  font-size: 0.9em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.api-key-status {
+  font-size: 0.85em;
+  color: var(--text-muted);
+}
+
+.api-key-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.api-key-actions button {
+  flex: 1;
+  padding: 4px 8px;
+  font-size: 0.9em;
+}
+
+.api-key-item-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted);
+  border: 1px dashed var(--background-modifier-border);
+  border-radius: 6px;
+}
+
+/* Tab Navigation */
+.model-runner-tabs {
+  margin-bottom: 24px;
+}
+
+.tab-buttons {
+  display: flex;
+  gap: 8px;
+  border-bottom: 2px solid var(--background-modifier-border);
+  margin-bottom: 16px;
+}
+
+.tab-button {
+  padding: 8px 16px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.tab-button:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+
+.tab-button.active {
+  color: var(--interactive-accent);
+  border-bottom-color: var(--interactive-accent);
+}
+
+.tab-content {
+  padding: 16px 0;
+}
+
+
+
+
+

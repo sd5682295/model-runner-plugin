@@ -1,0 +1,15 @@
+{
+  "model": "gpt-5.5",
+  "messages": [
+    {
+      "role": "system",
+      "content": "你是一个专业的AI产品研究员，擅长分析AI中间件/本地模型网关的最佳实践。"
+    },
+    {
+      "role": "user",
+      "content": "我需要搜索AI模型本地中间件、model-runner自托管、OpenAI兼容网关相关的经验分享。请问用哪些中英文关键词组合搜索最全面？列出5-8个关键词组合，只给关键词组合即可。"
+    }
+  ],
+  "temperature": 0.3,
+  "max_tokens": 500
+}

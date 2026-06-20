@@ -1,0 +1,31 @@
+﻿# model-runner 配置总览
+
+## 平台列表
+| 平台 | ID | BaseURL | Keys | 状态 |
+|------|----|---------|------|------|
+| 一元模型 | mytokenland | https://timesniper.club/v1 | 2 | standby |
+| 算力岛 | smoylr3mxr8m | https://api.mytokenland.com/v1 | 1 | **active** |
+| 伟业科技 | ceotech | https://claude.api.ceo-tech.cn/v1 | 1 | standby |
+
+## 模型路由表（优先级从左到右）
+
+### Claude 全系列 → 伟业科技优先
+| 模型 | 第一优先 | 第二优先 | 第三优先 |
+|------|---------|---------|---------|
+| claude-opus-4-7 | 伟业科技 | 一元模型 | 算力岛 |
+| claude-opus-4-6 | 伟业科技 | 一元模型 | 算力岛 |
+| claude-sonnet-4-7 | 伟业科技 | 一元模型 | 算力岛 |
+| claude-sonnet-4-6 | 伟业科技 | 一元模型 | 算力岛 |
+| claude-haiku-4-5 | 伟业科技 | 一元模型 | 算力岛 |
+
+### claude / Gemini / 通配 claude
+| 模型 | 第一优先 | 第二优先 |
+|------|---------|---------|
+| gemini-3.1-pro | 算力岛 | - |
+| claude (通配) | 算力岛 | 一元模型 |
+
+## 全局设置
+- 超时: 30000ms
+- 重试: 1次
+- 活跃源: 算力岛 (smoylr3mxr8m)
+

@@ -1,0 +1,255 @@
+{
+  "sources": [
+    {
+      "id": "mytokenland",
+      "name": "timesniper",
+      "baseUrl": "https://timesniper.club/v1",
+      "apiKeys": [
+        "sk-GCy44oTGyPxmWurXWkvj0KoXFYeW25JhCfFNbribCZIZQplz",
+        "sk-GihBgqvCtIfxJ1MZsZ7tuGmuKBt0PDktCVRaBFZqGj3MjaV8"
+      ],
+      "_rrIndex": 0
+    },
+    {
+      "id": "smoylr3mxr8m",
+      "name": "api.mytokenland.com",
+      "baseUrl": "https://api.mytokenland.com/v1",
+      "apiKeys": [
+        "sk-GihBgqvCtIfxJ1MZsZ7tuGmuKBt0PDktCVRaBFZqGj3MjaV8"
+      ],
+      "_rrIndex": 0
+    }
+  ],
+  "activeSourceId": "smoylr3mxr8m",
+  "modelRoutes": {
+    "gpt-5.5": {
+      "preferredPlatforms": [
+        "mytokenland",
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "claude-opus-4-7": {
+      "preferredPlatforms": [
+        "mytokenland",
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "claude-haiku-4-5": {
+      "preferredPlatforms": [
+        "mytokenland"
+      ],
+      "disabledPlatforms": []
+    },
+    "claude-haiku-4-5-20251001": {
+      "preferredPlatforms": [
+        "mytokenland"
+      ],
+      "disabledPlatforms": []
+    },
+    "claude-opus-4-6": {
+      "preferredPlatforms": [
+        "mytokenland",
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "claude-opus-4-6-20260206": {
+      "preferredPlatforms": [
+        "mytokenland"
+      ],
+      "disabledPlatforms": []
+    },
+    "claude-opus-4-6-thinking": {
+      "preferredPlatforms": [
+        "mytokenland",
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "claude-sonnet-4-6": {
+      "preferredPlatforms": [
+        "mytokenland",
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "claude-sonnet-4-6-thinking": {
+      "preferredPlatforms": [
+        "mytokenland"
+      ],
+      "disabledPlatforms": []
+    },
+    "claude-sonnet-4-7": {
+      "preferredPlatforms": [
+        "mytokenland"
+      ],
+      "disabledPlatforms": []
+    },
+    "deepseek-v3.2": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "deepseek-v4-flash": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "deepseek-v4-pro": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "doubao-seed-2.0-code": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "doubao-seed-2.0-lite": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "doubao-seed-2.0-pro": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "gemini-3.1-pro": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "glm-4.7": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "glm-5.1": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "gpt-5.3-codex": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "gpt-5.3-codex-spark": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "gpt-5.4": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "gpt-5.4-mini": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "gpt-image-2": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "K2.6-code-preview": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "kimi-2.5": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "kimi-for-coding": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "kimi-k2.5": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "kimi-k2.6": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "mimo-v2-omni": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "mimo-v2-pro": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "mimo-v2.5": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "MiniMax-M2.7": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "MiniMax-M2.7-highspeed": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "qwen3-coder-plus": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "qwen3.5-plus": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    },
+    "qwen3.6-plus": {
+      "preferredPlatforms": [
+        "smoylr3mxr8m"
+      ],
+      "disabledPlatforms": []
+    }
+  },
+  "timeout": 30000,
+  "retries": 1
+}

@@ -1,0 +1,65 @@
+{
+  "yunyi": {
+    "status": "circuit_open",
+    "lastCheck": "2026-06-14T12:23:13.570Z",
+    "errorRate": 0.1,
+    "avgLatencyMs": 1109,
+    "consecutiveFailures": 310,
+    "circuitOpenAt": "2026-06-14T12:23:13.570Z",
+    "recentLatencies": [
+      735,
+      2784,
+      1645,
+      1032,
+      780,
+      723,
+      807,
+      1083,
+      736,
+      766
+    ],
+    "recentErrors": 0
+  },
+  "ceotech": {
+    "status": "healthy",
+    "lastCheck": "2026-06-14T12:23:14.114Z",
+    "errorRate": 0,
+    "avgLatencyMs": 647,
+    "consecutiveFailures": 0,
+    "circuitOpenAt": null,
+    "recentLatencies": [
+      557,
+      556,
+      1519,
+      544,
+      546,
+      539,
+      553,
+      557,
+      559,
+      543
+    ],
+    "recentErrors": 0
+  },
+  "mytokenland": {
+    "status": "healthy",
+    "lastCheck": "2026-06-14T12:23:14.840Z",
+    "errorRate": 0,
+    "avgLatencyMs": 956,
+    "consecutiveFailures": 0,
+    "circuitOpenAt": null,
+    "recentLatencies": [
+      977,
+      704,
+      714,
+      705,
+      1018,
+      1219,
+      1160,
+      1351,
+      989,
+      726
+    ],
+    "recentErrors": 0
+  }
+}

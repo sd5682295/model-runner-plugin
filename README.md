@@ -1,92 +1,54 @@
-# Obsidian Sample Plugin
+# Model Runner - Obsidian Plugin
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+在 Obsidian 内启动和管理 Model Runner 服务器，统一管理多个 AI 模型 API 源。
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+## 功能特性
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
+### Phase 1: MVP ✅ 已完成
 
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open modal (simple)" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and outputs a Notice on click.
-- Registers a global interval which logs 'setInterval' to the console.
+- ✅ **一键启动/停止**：通过侧边栏按钮或状态栏图标控制服务器
+- ✅ **实时日志**：查看服务器运行日志，支持滚动和清空
+- ✅ **状态监控**：状态栏实时显示运行状态（🟢运行中 / 🔴已停止）
+- ✅ **进程管理**：插件卸载时自动停止服务器，无需手动清理
+- ✅ **快捷命令**：通过命令面板快速操作
 
-## First time developing plugins?
+## 使用方法
 
-Quick starting guide for new plugin devs:
+### 启动服务器
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `src/main.ts` to `main.js`.
-- Make changes to `src/main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+1. 点击左侧 Ribbon 栏的 **CPU 图标** 打开控制面板
+2. 点击 **▶️ 启动** 按钮
+3. 等待日志显示 "服务器启动成功"
+4. 状态栏显示 🟢 运行中
 
-## Releasing new releases
+### 停止服务器
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+- 点击 **⏹️ 停止** 按钮
+- 或点击状态栏图标切换状态
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+## 快捷命令
 
-## Adding your plugin to the community plugin list
+在命令面板（Ctrl/Cmd + P）中搜索：
 
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+- `Model Runner: 启动服务器`
+- `Model Runner: 停止服务器`
+- `Model Runner: 打开控制面板`
 
-## How to use
+## 开发
 
-- Clone this repo.
-- Make sure your NodeJS is at least v18 (`node --version`).
-- `npm i` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+```bash
+# 开发模式（自动监听变化）
+npm run dev
 
-## Manually installing the plugin
-
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
-
-## Improve code quality with eslint
-
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code.
-- This project already has eslint preconfigured, you can invoke a check by running`npm run lint`
-- Together with a custom eslint [plugin](https://github.com/obsidianmd/eslint-plugin) for Obsidan specific code guidelines.
-- A GitHub action is preconfigured to automatically lint every commit on all branches.
-
-## Funding URL
-
-You can include funding URLs where people who use your plugin can financially support it.
-
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
-
-```json
-{
-	"fundingUrl": "https://buymeacoffee.com"
-}
+# 生产构建
+npm run build
 ```
 
-If you have multiple URLs, you can also do:
+## 更新日志
 
-```json
-{
-	"fundingUrl": {
-		"Buy Me a Coffee": "https://buymeacoffee.com",
-		"GitHub Sponsor": "https://github.com/sponsors",
-		"Patreon": "https://www.patreon.com/"
-	}
-}
-```
+### v0.1.0 (2024-06-15)
 
-## API Documentation
-
-See https://docs.obsidian.md
+- ✅ Phase 1 MVP 完成
+- ✅ 基础启动/停止功能
+- ✅ 实时日志显示
+- ✅ 状态栏集成

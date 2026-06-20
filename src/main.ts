@@ -1,114 +1,160 @@
-import {
-	Editor,
-	MarkdownView,
-	MarkdownFileInfo,
-	Modal,
-	Notice,
-	Plugin,
-} from 'obsidian';
-import {
-	DEFAULT_SETTINGS,
-	MyPluginSettings,
-	SampleSettingTab,
-} from './settings';
+import { Plugin, Notice, FileSystemAdapter } from 'obsidian';
+import { ProcessManager } from './ProcessManager';
+import { ModelRunnerView, VIEW_TYPE } from './ModelRunnerView';
+import { ConfigManager } from './ConfigManager';
+import { ServiceManager } from './ServiceManager';
+import { ModelRunnerSettingTab } from './SettingsTab';
+import { DEFAULT_SETTINGS, type PluginSettings } from './constants';
+import * as path from 'path';
 
-// Remember to rename these classes and interfaces!
+export default class ModelRunnerPlugin extends Plugin {
+  settings!: PluginSettings;
+  processManager!: ProcessManager;
+  configManager?: ConfigManager;
+  serviceManager!: ServiceManager;
+  statusBarItem!: HTMLElement;
+  view: ModelRunnerView | null = null;
+  serverDir!: string;
 
-export default class MyPlugin extends Plugin {
-	settings!: MyPluginSettings;
+  async onload(): Promise<void> {
+    console.log('Loading Model Runner Plugin');
 
-	async onload() {
-		await this.loadSettings();
+    await this.loadSettings();
 
-		// This creates an icon in the left ribbon.
-		this.addRibbonIcon('dice', 'Sample', (_evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
+    // 正确获取插件目录的方式（根据 Obsidian 官方文档）
+    let vaultPath: string;
+    if (this.app.vault.adapter instanceof FileSystemAdapter) {
+      vaultPath = this.app.vault.adapter.getBasePath();
+    } else {
+      new Notice('❌ 插件仅支持桌面版 Obsidian');
+      console.error('FileSystemAdapter not available');
+      return;
+    }
 
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status bar text');
+    const pluginDir = path.join(vaultPath, this.manifest.dir || '');
+    const serverDir = path.join(pluginDir, 'server');
+    this.serverDir = serverDir;
 
-		// This adds a simple command that can be triggered anywhere
-		this.addCommand({
-			id: 'open-modal-simple',
-			name: 'Open modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
-			},
-		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'replace-selected',
-			name: 'Replace selected content',
-			editorCallback: (
-				editor: Editor,
-				_ctx: MarkdownView | MarkdownFileInfo,
-			) => {
-				editor.replaceSelection('Sample editor command');
-			},
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-modal-complex',
-			name: 'Open modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView =
-					this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
+    console.log('Vault path:', vaultPath);
+    console.log('Plugin directory:', pluginDir);
+    console.log('Server directory:', serverDir);
 
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
-				}
-				return false;
-			},
-		});
+    // 初始化配置管理器
+    this.configManager = new ConfigManager(serverDir);
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+    // 初始化服务管理器
+    this.serviceManager = new ServiceManager();
 
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(activeDocument, 'click', (_evt: MouseEvent) => {
-			new Notice('Click');
-		});
+    this.processManager = new ProcessManager(
+      serverDir,
+      (msg, level) => this.view?.appendLog(msg, level),
+      (running) => this.updateStatusBar(running)
+    );
 
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(
-			window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000),
-		);
-	}
+    // 添加设置页面
+    this.addSettingTab(new ModelRunnerSettingTab(this.app, this));
 
-	onunload() {}
+    // 注册视图
+    this.registerView(VIEW_TYPE, (leaf) => {
+      this.view = new ModelRunnerView(leaf, this);
+      return this.view;
+    });
 
-	async loadSettings() {
-		this.settings = Object.assign(
-			{},
-			DEFAULT_SETTINGS,
-			(await this.loadData()) as Partial<MyPluginSettings>,
-		);
-	}
+    // Ribbon 图标
+    this.addRibbonIcon('cpu', 'Model Runner', () => {
+      this.activateView();
+    });
 
-	async saveSettings() {
-		await this.saveData(this.settings);
-	}
-}
+    // 状态栏
+    this.statusBarItem = this.addStatusBarItem();
+    this.updateStatusBar(false);
+    this.statusBarItem.onclick = () => this.toggleServer();
 
-class SampleModal extends Modal {
-	onOpen() {
-		const { contentEl } = this;
-		contentEl.setText('Woah!');
-	}
+    // 命令
+    this.addCommand({
+      id: 'start-server',
+      name: '启动服务器',
+      callback: () => this.startServer(),
+    });
 
-	onClose() {
-		const { contentEl } = this;
-		contentEl.empty();
-	}
+    this.addCommand({
+      id: 'stop-server',
+      name: '停止服务器',
+      callback: () => this.stopServer(),
+    });
+
+    this.addCommand({
+      id: 'open-panel',
+      name: '打开控制面板',
+      callback: () => this.activateView(),
+    });
+
+    // 自动启动
+    if (this.settings.autoStart) {
+      setTimeout(() => this.startServer(), 2000);
+    }
+  }
+
+  async activateView(): Promise<void> {
+    const { workspace } = this.app;
+    let leaf = workspace.getLeavesOfType(VIEW_TYPE)[0];
+
+    if (!leaf) {
+      const rightLeaf = workspace.getRightLeaf(false);
+      if (!rightLeaf) return;
+      await rightLeaf.setViewState({ type: VIEW_TYPE, active: true });
+      leaf = rightLeaf;
+    }
+
+    workspace.revealLeaf(leaf);
+  }
+
+  async startServer(): Promise<void> {
+    // 加载配置
+    try {
+      await this.configManager?.load();
+      console.log('配置已加载');
+
+      // 刷新侧边栏配置显示
+      if (this.view) {
+        this.view.refreshConfig();
+      }
+    } catch (error) {
+      console.error('加载配置失败:', error);
+      // 继续启动，使用默认配置
+    }
+
+    await this.processManager.start();
+  }
+
+  async stopServer(): Promise<void> {
+    await this.processManager.stop();
+  }
+
+  toggleServer(): void {
+    if (this.processManager.getIsRunning()) {
+      this.stopServer();
+    } else {
+      this.startServer();
+    }
+  }
+
+  updateStatusBar(running: boolean): void {
+    const icon = running ? '🟢' : '🔴';
+    const text = running ? '运行中' : '未运行';
+    this.statusBarItem.setText(`${icon} ${text}`);
+  }
+
+  async onunload(): Promise<void> {
+    console.log('Unloading Model Runner Plugin');
+    this.stopServer();
+  }
+
+  async loadSettings(): Promise<void> {
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+  }
+
+  async saveSettings(): Promise<void> {
+    await this.saveData(this.settings);
+  }
 }
