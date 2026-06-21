@@ -3,6 +3,7 @@ import { ProcessManager } from './ProcessManager';
 import { ModelRunnerView, VIEW_TYPE } from './ModelRunnerView';
 import { ConfigManager } from './ConfigManager';
 import { ServiceManager } from './ServiceManager';
+import { ClaudeCodeManager } from './ClaudeCodeManager';
 import { ModelRunnerSettingTab } from './SettingsTab';
 import { DEFAULT_SETTINGS, type PluginSettings } from './constants';
 import * as path from 'path';
@@ -12,6 +13,7 @@ export default class ModelRunnerPlugin extends Plugin {
   processManager!: ProcessManager;
   configManager?: ConfigManager;
   serviceManager!: ServiceManager;
+  claudeCodeManager!: ClaudeCodeManager;
   statusBarItem!: HTMLElement;
   view: ModelRunnerView | null = null;
   serverDir!: string;
@@ -44,6 +46,9 @@ export default class ModelRunnerPlugin extends Plugin {
 
     // 初始化服务管理器
     this.serviceManager = new ServiceManager();
+
+    // 初始化 ClaudeCode 管理器
+    this.claudeCodeManager = new ClaudeCodeManager();
 
     this.processManager = new ProcessManager(
       serverDir,

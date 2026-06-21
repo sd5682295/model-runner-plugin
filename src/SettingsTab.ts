@@ -499,35 +499,129 @@ export class ModelRunnerSettingTab extends PluginSettingTab {
     containerEl.createEl('h4', { text: '💻 Claude Code 配置' });
 
     const claudeDesc = containerEl.createDiv({ cls: 'setting-item-description' });
-    claudeDesc.setText('管理 Claude Code 的 API 源和模型配置');
+    claudeDesc.setText('配置 Claude Code 使用本地 model-runner 作为 API 后端');
 
     const claudeCard = containerEl.createDiv({ cls: 'service-card' });
+
+    // 获取配置状态
+    const status = this.plugin.claudeCodeManager.getConfigStatus();
 
     // 配置路径
     const pathRow = claudeCard.createDiv({ cls: 'service-detail-row' });
     pathRow.createSpan({ text: '配置路径: ', cls: 'service-detail-label' });
     pathRow.createSpan({
-      text: '~/.claude/settings.json',
+      text: this.plugin.claudeCodeManager.getConfigPath(),
       cls: 'service-detail-value'
     });
+
+    // 当前状态
+    const statusRow = claudeCard.createDiv({ cls: 'service-detail-row' });
+    statusRow.createSpan({ text: '当前状态: ', cls: 'service-detail-label' });
+    const statusBadge = statusRow.createSpan({
+      cls: 'service-status ' + (status.isUsingModelRunner ? 'status-running' : 'status-stopped')
+    });
+    statusBadge.setText(status.isUsingModelRunner ? '✅ 使用 model-runner' : '❌ 使用官方 API');
+
+    // 当前 URL
+    if (status.currentUrl) {
+      const urlRow = claudeCard.createDiv({ cls: 'service-detail-row' });
+      urlRow.createSpan({ text: 'API URL: ', cls: 'service-detail-label' });
+      urlRow.createSpan({
+        text: status.currentUrl,
+        cls: 'service-detail-value'
+      });
+    }
+
+    // 原始 URL（如果有）
+    if (status.originalUrl) {
+      const originalUrlRow = claudeCard.createDiv({ cls: 'service-detail-row' });
+      originalUrlRow.createSpan({ text: '原始 URL: ', cls: 'service-detail-label' });
+      originalUrlRow.createSpan({
+        text: status.originalUrl,
+        cls: 'service-detail-value'
+      });
+    }
 
     // 操作按钮
     const claudeActions = claudeCard.createDiv({ cls: 'service-actions' });
 
-    const openConfigBtn = claudeActions.createEl('button', {
-      text: '打开配置',
-      cls: 'mod-cta',
-    });
-    openConfigBtn.onclick = () => {
-      new Notice('功能开发中...');
-    };
+    if (!status.isUsingModelRunner) {
+      // 配置使用 model-runner
+      const configureBtn = claudeActions.createEl('button', {
+        text: '🔧 配置使用 model-runner',
+        cls: 'mod-cta',
+      });
+      configureBtn.onclick = async () => {
+        try {
+          configureBtn.disabled = true;
+          configureBtn.setText('配置中...');
 
-    const editSourceBtn = claudeActions.createEl('button', {
-      text: '编辑 API 源',
+          const success = this.plugin.claudeCodeManager.configureForModelRunner(
+            this.plugin.settings.port
+          );
+
+          if (success) {
+            new Notice('✅ 已配置 Claude Code 使用 model-runner\n请重启 Claude Code 生效');
+            this.display(); // 刷新显示
+          } else {
+            new Notice('❌ 配置失败');
+            configureBtn.disabled = false;
+            configureBtn.setText('🔧 配置使用 model-runner');
+          }
+        } catch (error) {
+          new Notice('❌ 配置失败: ' + error);
+          configureBtn.disabled = false;
+          configureBtn.setText('🔧 配置使用 model-runner');
+        }
+      };
+    } else {
+      // 恢复使用官方 API
+      const restoreBtn = claudeActions.createEl('button', {
+        text: '🔄 恢复使用官方 API',
+        cls: 'mod-warning',
+      });
+      restoreBtn.onclick = async () => {
+        try {
+          restoreBtn.disabled = true;
+          restoreBtn.setText('恢复中...');
+
+          const success = this.plugin.claudeCodeManager.restoreOriginalConfig();
+
+          if (success) {
+            new Notice('✅ 已恢复使用官方 API\n请重启 Claude Code 生效');
+            this.display(); // 刷新显示
+          } else {
+            new Notice('❌ 恢复失败');
+            restoreBtn.disabled = false;
+            restoreBtn.setText('🔄 恢复使用官方 API');
+          }
+        } catch (error) {
+          new Notice('❌ 恢复失败: ' + error);
+          restoreBtn.disabled = false;
+          restoreBtn.setText('🔄 恢复使用官方 API');
+        }
+      };
+    }
+
+    // 备份管理按钮
+    const backupBtn = claudeActions.createEl('button', {
+      text: '💾 管理备份',
     });
-    editSourceBtn.onclick = () => {
-      new Notice('功能开发中...');
+    backupBtn.onclick = () => {
+      this.showBackupManagementModal();
     };
+  }
+
+  private showBackupManagementModal(): void {
+    const backups = this.plugin.claudeCodeManager.listBackups();
+
+    if (backups.length === 0) {
+      new Notice('📁 没有找到备份文件');
+      return;
+    }
+
+    new Notice(`找到 ${backups.length} 个备份文件\n（备份管理界面开发中）`);
+    // TODO: 创建备份管理弹窗
   }
 
   private showServiceConfigModal(service: any): void {
