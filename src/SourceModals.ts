@@ -237,8 +237,7 @@ export class AddSourceModal extends Modal {
         return;
       }
       console.log('[AddSourceModal] 使用模型进行测试:', testModel);
-      // TypeScript 类型保护后，testModel 确定是 string
-      await this.testModelConnection(baseURL, apiKey, testModel as string);
+      await this.testModelConnection(baseURL, apiKey, testModel!);
 
     } catch (error: any) {
       console.error('[AddSourceModal] 测试连接异常:', error);
@@ -534,16 +533,15 @@ export class EditSourceModal extends Modal {
 
       // 步骤 2: 使用第一个模型进行实际测试
       console.log('[EditSourceModal] 步骤 2: 测试第一个模型...');
-      const testModel = models[0]?.id;
-      if (!testModel) {
+      const testModelId = models[0]?.id;
+      if (!testModelId) {
         const errorMsg = '❌ 模型数据格式错误';
         console.error('[EditSourceModal]', errorMsg, { firstModel: models[0] });
         new Notice(errorMsg);
         return;
       }
-      console.log('[EditSourceModal] 使用模型进行测试:', testModel);
-      // TypeScript 类型保护后，testModel 确定是 string
-      await this.testModelConnection(baseURL, apiKey, testModel as string);
+      console.log('[EditSourceModal] 使用模型进行测试:', testModelId);
+      await this.testModelConnection(baseURL, apiKey, testModelId as string);
 
     } catch (error: any) {
       console.error('[EditSourceModal] 测试连接异常:', error);
