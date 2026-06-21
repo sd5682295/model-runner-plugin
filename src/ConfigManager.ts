@@ -7,6 +7,13 @@ export interface OriginalSource {
   name: string;
   baseUrl: string;
   apiKeys: string[];
+  models?: string[];
+  costConfig?: {
+    [modelId: string]: {
+      input: number;   // $/1M tokens
+      output: number;  // $/1M tokens
+    };
+  };
 }
 
 export interface OriginalConfig {

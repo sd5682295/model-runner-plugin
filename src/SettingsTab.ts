@@ -2,6 +2,7 @@ import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
 import type ModelRunnerPlugin from './main';
 import { AddSourceModal, EditSourceModal } from './SourceModals';
 import { ManageKeysModal } from './ManageKeysModal';
+import { ModelCostConfigModal } from './ModelCostConfigModal';
 
 export class ModelRunnerSettingTab extends PluginSettingTab {
   plugin: ModelRunnerPlugin;
@@ -309,11 +310,25 @@ export class ModelRunnerSettingTab extends PluginSettingTab {
       }
     }
 
+    // 显示价格（如果已配置）
+    const costConfig = this.getModelCost(model.id);
+    if (costConfig) {
+      const priceDiv = infoDiv.createDiv({ cls: 'model-price' });
+      priceDiv.createSpan({
+        text: `💰 $${costConfig.input} / $${costConfig.output}`,
+        cls: 'model-price-text',
+      });
+      priceDiv.createSpan({
+        text: ' per 1M tokens',
+        cls: 'model-price-unit',
+      });
+    }
+
     // 操作按钮
     const actionsDiv = card.createDiv({ cls: 'model-actions' });
 
     const configBtn = actionsDiv.createEl('button', {
-      text: '⚙️ 配置成本',
+      text: costConfig ? '⚙️ 编辑成本' : '⚙️ 配置成本',
       cls: 'mod-cta',
     });
     configBtn.onclick = () => {
@@ -321,19 +336,29 @@ export class ModelRunnerSettingTab extends PluginSettingTab {
     };
   }
 
-  private formatNumber(num: number): string {
-    if (num >= 1000000) {
-      return `${(num / 1000000).toFixed(1)}M`;
-    }
-    if (num >= 1000) {
-      return `${(num / 1000).toFixed(1)}K`;
-    }
-    return num.toString();
+  private getModelCost(modelId: string): { input: number; output: number } | null {
+    const config = this.plugin.configManager?.getConfig();
+    if (!config) return null;
+
+    const currentSource = config.sources.find(s => s.id === config.activeSourceId);
+    if (!currentSource || !currentSource.costConfig) return null;
+
+    return currentSource.costConfig[modelId] || null;
   }
 
   private openModelCostConfig(model: any): void {
-    new Notice(`配置 ${model.id} 的成本（功能开发中）`);
-    // TODO: 打开成本配置弹窗
+    const modal = new ModelCostConfigModal(
+      this.app,
+      this.plugin,
+      model,
+      (data) => {
+        // 成本保存后刷新显示
+        new Notice(`✅ 已保存 ${model.id} 的成本配置`);
+        // 重新渲染模型列表以更新价格显示
+        this.display();
+      }
+    );
+    modal.open();
   }
 
   private renderServicesTab(containerEl: HTMLElement): void {

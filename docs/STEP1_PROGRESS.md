@@ -1,7 +1,7 @@
 # Step 1: 模型管理 - 进度记录
 
 **开始时间**：2026-06-21 15:30  
-**当前状态**：Step 1.1 完成  
+**当前状态**：Step 1.2 完成  
 
 ---
 
@@ -32,55 +32,46 @@
    - 刷新按钮
    - 自动加载（打开 Tab 时）
 
-### 代码修改
-- `src/SettingsTab.ts`
-  - `renderModelsTab()` - 主渲染函数
-  - `loadAndDisplayModels()` - 加载模型
-  - `fetchModels()` - API 调用
-  - `renderModelFilters()` - 过滤器
-  - `filterModels()` - 过滤逻辑
-  - `renderModelsList()` - 列表渲染
-  - `groupModelsByProvider()` - 分组
-  - `extractProvider()` - 提取 provider
-  - `renderModelCard()` - 卡片渲染
-  - `formatNumber()` - 数字格式化
-
-- `styles.css`
-  - 添加模型管理相关样式
-  - 响应式布局
-  - Hover 效果
-
-### 文件大小
-- main.js: 53K
-- styles.css: 13K
-
 ---
 
-## ⏳ Step 1.2: 模型成本配置（下一步）
+## ✅ Step 1.2: 模型成本配置（已完成）
 
-### 待实现
-1. [ ] 成本配置弹窗
+### 实现的功能
+1. ✅ 成本配置弹窗
    - Modal UI
    - Input Token 价格输入
    - Output Token 价格输入
-   - 保存到 config.json
+   - 保存到 config.json 的 costConfig
 
-2. [ ] 成本显示
-   - 在模型卡片上显示价格
+2. ✅ 成本预览
+   - 实时计算不同 token 数量的成本
+   - 1K、10K、100K tokens 的成本预览
+
+3. ✅ 常见价格模板
+   - GPT-4、GPT-3.5、Claude 3 系列
+   - 一键应用模板价格
+
+4. ✅ 价格显示
+   - 在模型卡片上显示已配置的价格
    - 价格格式化（$/1M tokens）
+   - 编辑/配置按钮
 
-3. [ ] 成本计算
-   - 根据 Token 数量计算成本
-   - 成本预览
+### 新增文件
+- `src/ModelCostConfigModal.ts` - 成本配置弹窗
+
+### 修改文件
+- `src/ConfigManager.ts` - 添加 costConfig 类型定义
+- `src/SettingsTab.ts` - 集成成本配置功能
+- `styles.css` - 添加成本相关样式
 
 ---
 
-## ⏳ Step 1.3: 模型详情（计划）
+## ⏳ Step 1.3: 模型详情（下一步）
 
 ### 待实现
 1. [ ] 详情弹窗
    - 完整的模型信息
-   - 支持的功能
+   - 支持的功能（function calling, vision 等）
    - 使用示例
 
 2. [ ] 模型测试
@@ -103,20 +94,20 @@
 ## 📊 进度
 
 - Step 1.1: ✅ 100%
-- Step 1.2: ⏳ 0%
+- Step 1.2: ✅ 100%
 - Step 1.3: ⏳ 0%
 - Step 1.4: ⏳ 0%
 
-**总进度**: 25%
+**总进度**: 50%
 
 ---
 
 ## 🎯 下一步行动
 
-1. 实现成本配置弹窗
-2. 保存成本到 config.json
-3. 在卡片上显示价格
+1. 实现模型详情弹窗（可选）
+2. 高级过滤功能（可选）
+3. 或者直接进入 Step 2: 服务配置
 
 ---
 
-**更新时间**：2026-06-21 15:55
+**更新时间**：2026-06-21 18:35
