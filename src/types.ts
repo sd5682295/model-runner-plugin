@@ -27,10 +27,21 @@ export interface HealthStatus {
   circuitOpenAt: string | null;
 }
 
+export interface ServiceConfig {
+  port?: number;
+  timeout?: number;
+  retries?: number;
+  logLevel?: 'INFO' | 'WARN' | 'ERROR';
+  searchEngine?: string;
+  apiKey?: string;
+  [key: string]: any;
+}
+
 export interface PluginSettings {
   autoStart: boolean;
   port: number;
   showNotifications: boolean;
   autoRestart: boolean;
   maxRestartAttempts: number;
+  serviceConfigs?: Record<string, ServiceConfig>;
 }

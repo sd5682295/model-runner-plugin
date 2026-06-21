@@ -3,6 +3,7 @@ import type ModelRunnerPlugin from './main';
 import { AddSourceModal, EditSourceModal } from './SourceModals';
 import { ManageKeysModal } from './ManageKeysModal';
 import { ModelCostConfigModal } from './ModelCostConfigModal';
+import { ServiceConfigModal } from './ServiceConfigModal';
 
 export class ModelRunnerSettingTab extends PluginSettingTab {
   plugin: ModelRunnerPlugin;
@@ -530,7 +531,17 @@ export class ModelRunnerSettingTab extends PluginSettingTab {
   }
 
   private showServiceConfigModal(service: any): void {
-    new Notice('配置编辑功能开发中...');
+    const modal = new ServiceConfigModal(
+      this.app,
+      this.plugin,
+      service,
+      (config) => {
+        new Notice(`✅ 已保存 ${service.displayName} 配置`);
+        // 配置保存后刷新显示
+        this.display();
+      }
+    );
+    modal.open();
   }
 
   private renderMonitorTab(containerEl: HTMLElement): void {
