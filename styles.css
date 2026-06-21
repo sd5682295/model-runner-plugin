@@ -837,3 +837,107 @@
   font-family: var(--font-monospace);
 }
 
+/* Monitor Tab Styles */
+.monitor-card {
+  margin: 16px 0;
+  padding: 16px;
+  background: var(--background-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border);
+}
+
+.monitor-card h4 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  color: var(--text-normal);
+}
+
+.monitor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.monitor-box {
+  padding: 12px;
+  background: var(--background-primary);
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+}
+
+.monitor-label {
+  font-size: 0.85em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.monitor-value {
+  font-size: 1.5em;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+
+.monitor-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.monitor-detail {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.monitor-detail h5 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 0.95em;
+  color: var(--text-normal);
+}
+
+.monitor-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+.monitor-table th {
+  text-align: left;
+  padding: 8px;
+  background: var(--background-primary);
+  border-bottom: 2px solid var(--background-modifier-border);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.monitor-table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  color: var(--text-normal);
+}
+
+.monitor-table tr:hover {
+  background: var(--background-modifier-hover);
+}
+
+.monitor-logs-table {
+  font-size: 0.85em;
+}
+
+.monitor-logs-table td {
+  padding: 6px 8px;
+}
+
+.monitor-refresh {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  justify-content: center;
+}
+
+.monitor-refresh button {
+  padding: 8px 16px;
+}
+

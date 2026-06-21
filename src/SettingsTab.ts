@@ -681,7 +681,214 @@ export class ModelRunnerSettingTab extends PluginSettingTab {
 
   private renderMonitorTab(containerEl: HTMLElement): void {
     containerEl.createEl('h3', { text: '📊 状态监控' });
-    containerEl.createDiv({ text: '功能开发中...' });
+
+    const desc = containerEl.createDiv({ cls: 'setting-item-description' });
+    desc.setText('查看 model-runner 的运行状态、请求统计和 Token 使用情况');
+
+    // 服务状态
+    this.renderServiceStatus(containerEl);
+
+    // 请求统计
+    this.renderRequestStats(containerEl);
+
+    // Token 统计
+    this.renderTokenStats(containerEl);
+
+    // 最近日志
+    this.renderRecentLogs(containerEl);
+
+    // 刷新按钮
+    const refreshContainer = containerEl.createDiv({ cls: 'monitor-refresh' });
+    const refreshBtn = refreshContainer.createEl('button', {
+      text: '🔄 刷新数据',
+      cls: 'mod-cta',
+    });
+    refreshBtn.onclick = () => {
+      this.display();
+    };
+
+    // 重置统计按钮
+    const resetBtn = refreshContainer.createEl('button', {
+      text: '🗑️ 重置统计',
+      cls: 'mod-warning',
+    });
+    resetBtn.onclick = () => {
+      if (confirm('确定要重置所有统计数据吗？')) {
+        this.plugin.statsManager?.resetStats();
+        new Notice('✅ 统计数据已重置');
+        this.display();
+      }
+    };
+  }
+
+  private renderServiceStatus(containerEl: HTMLElement): void {
+    const statusCard = containerEl.createDiv({ cls: 'monitor-card' });
+    statusCard.createEl('h4', { text: '🔧 服务状态' });
+
+    const statusGrid = statusCard.createDiv({ cls: 'monitor-grid' });
+
+    // 运行状态
+    const runningBox = statusGrid.createDiv({ cls: 'monitor-box' });
+    runningBox.createDiv({ text: '运行状态', cls: 'monitor-label' });
+    const isRunning = this.plugin.processManager.isRunning();
+    const statusValue = runningBox.createDiv({ cls: 'monitor-value' });
+    statusValue.setText(isRunning ? '✅ 运行中' : '❌ 已停止');
+    statusValue.style.color = isRunning ? 'var(--interactive-accent)' : 'var(--text-muted)';
+
+    // 端口
+    const portBox = statusGrid.createDiv({ cls: 'monitor-box' });
+    portBox.createDiv({ text: '端口', cls: 'monitor-label' });
+    portBox.createDiv({ text: String(this.plugin.settings.port), cls: 'monitor-value' });
+
+    // 进程 PID（如果运行中）
+    if (isRunning) {
+      const pidBox = statusGrid.createDiv({ cls: 'monitor-box' });
+      pidBox.createDiv({ text: '进程 PID', cls: 'monitor-label' });
+      pidBox.createDiv({ text: 'N/A', cls: 'monitor-value' });
+    }
+  }
+
+  private renderRequestStats(containerEl: HTMLElement): void {
+    const statsCard = containerEl.createDiv({ cls: 'monitor-card' });
+    statsCard.createEl('h4', { text: '📈 请求统计' });
+
+    const summary = this.plugin.statsManager?.getSummary();
+    if (!summary || summary.totalRequests === 0) {
+      const notice = statsCard.createDiv({ cls: 'monitor-empty' });
+      notice.setText('暂无请求数据');
+      return;
+    }
+
+    const statsGrid = statsCard.createDiv({ cls: 'monitor-grid' });
+
+    // 总请求数
+    const totalBox = statsGrid.createDiv({ cls: 'monitor-box' });
+    totalBox.createDiv({ text: '总请求数', cls: 'monitor-label' });
+    totalBox.createDiv({ text: String(summary.totalRequests), cls: 'monitor-value' });
+
+    // 成功率
+    const successBox = statsGrid.createDiv({ cls: 'monitor-box' });
+    successBox.createDiv({ text: '成功率', cls: 'monitor-label' });
+    const successValue = successBox.createDiv({ cls: 'monitor-value' });
+    successValue.setText(`${summary.successRate}%`);
+    successValue.style.color = summary.successRate >= 90 ? '#10b981' : '#f59e0b';
+
+    // 平均延迟
+    const latencyBox = statsGrid.createDiv({ cls: 'monitor-box' });
+    latencyBox.createDiv({ text: '平均延迟', cls: 'monitor-label' });
+    latencyBox.createDiv({ text: `${summary.avgLatency}ms`, cls: 'monitor-value' });
+
+    // 总 Tokens
+    const tokensBox = statsGrid.createDiv({ cls: 'monitor-box' });
+    tokensBox.createDiv({ text: '总 Tokens', cls: 'monitor-label' });
+    tokensBox.createDiv({ text: this.formatNumber(summary.totalTokens), cls: 'monitor-value' });
+  }
+
+  private renderTokenStats(containerEl: HTMLElement): void {
+    const tokenCard = containerEl.createDiv({ cls: 'monitor-card' });
+    tokenCard.createEl('h4', { text: '💰 Token 统计' });
+
+    const stats = this.plugin.statsManager?.readStats();
+    if (!stats || stats.totalRequests === 0) {
+      const notice = tokenCard.createDiv({ cls: 'monitor-empty' });
+      notice.setText('暂无 Token 数据');
+      return;
+    }
+
+    const tokenGrid = tokenCard.createDiv({ cls: 'monitor-grid' });
+
+    // Input Tokens
+    const inputBox = tokenGrid.createDiv({ cls: 'monitor-box' });
+    inputBox.createDiv({ text: 'Input Tokens', cls: 'monitor-label' });
+    inputBox.createDiv({ text: this.formatNumber(stats.totalInputTokens), cls: 'monitor-value' });
+
+    // Output Tokens
+    const outputBox = tokenGrid.createDiv({ cls: 'monitor-box' });
+    outputBox.createDiv({ text: 'Output Tokens', cls: 'monitor-label' });
+    outputBox.createDiv({ text: this.formatNumber(stats.totalOutputTokens), cls: 'monitor-value' });
+
+    // 按模型统计
+    if (Object.keys(stats.byModel).length > 0) {
+      const byModelDiv = tokenCard.createDiv({ cls: 'monitor-detail' });
+      byModelDiv.createEl('h5', { text: '按模型统计' });
+
+      const modelTable = byModelDiv.createEl('table', { cls: 'monitor-table' });
+      const thead = modelTable.createEl('thead');
+      const headerRow = thead.createEl('tr');
+      headerRow.createEl('th', { text: '模型' });
+      headerRow.createEl('th', { text: '请求数' });
+      headerRow.createEl('th', { text: 'Input' });
+      headerRow.createEl('th', { text: 'Output' });
+
+      const tbody = modelTable.createEl('tbody');
+      for (const [model, modelStats] of Object.entries(stats.byModel)) {
+        const row = tbody.createEl('tr');
+        row.createEl('td', { text: model });
+        row.createEl('td', { text: String(modelStats.requests) });
+        row.createEl('td', { text: this.formatNumber(modelStats.inputTokens) });
+        row.createEl('td', { text: this.formatNumber(modelStats.outputTokens) });
+      }
+    }
+  }
+
+  private renderRecentLogs(containerEl: HTMLElement): void {
+    const logsCard = containerEl.createDiv({ cls: 'monitor-card' });
+    logsCard.createEl('h4', { text: '📝 最近请求' });
+
+    const stats = this.plugin.statsManager?.readStats();
+    if (!stats || stats.recentLogs.length === 0) {
+      const notice = logsCard.createDiv({ cls: 'monitor-empty' });
+      notice.setText('暂无日志');
+      return;
+    }
+
+    const logsTable = logsCard.createEl('table', { cls: 'monitor-table monitor-logs-table' });
+    const thead = logsTable.createEl('thead');
+    const headerRow = thead.createEl('tr');
+    headerRow.createEl('th', { text: '时间' });
+    headerRow.createEl('th', { text: '模型' });
+    headerRow.createEl('th', { text: '源' });
+    headerRow.createEl('th', { text: '状态' });
+    headerRow.createEl('th', { text: '延迟' });
+    headerRow.createEl('th', { text: 'Tokens' });
+
+    const tbody = logsTable.createEl('tbody');
+    const recentLogs = stats.recentLogs.slice(0, 20); // 只显示最近 20 条
+
+    recentLogs.forEach(log => {
+      const row = tbody.createEl('tr');
+
+      // 时间
+      const time = new Date(log.timestamp).toLocaleTimeString();
+      row.createEl('td', { text: time });
+
+      // 模型
+      row.createEl('td', { text: log.model });
+
+      // 源
+      row.createEl('td', { text: log.source });
+
+      // 状态
+      const statusCell = row.createEl('td', { text: String(log.status) });
+      statusCell.style.color = log.status === 200 ? '#10b981' : '#ef4444';
+
+      // 延迟
+      row.createEl('td', { text: `${log.latencyMs}ms` });
+
+      // Tokens
+      const totalTokens = log.promptTokens + log.completionTokens;
+      row.createEl('td', { text: this.formatNumber(totalTokens) });
+    });
+  }
+
+  private formatNumber(num: number): string {
+    if (num >= 1000000) {
+      return `${(num / 1000000).toFixed(1)}M`;
+    }
+    if (num >= 1000) {
+      return `${(num / 1000).toFixed(1)}K`;
+    }
+    return num.toString();
   }
 
   private renderCurrentSourceSelector(containerEl: HTMLElement): void {
