@@ -83,9 +83,257 @@ export class ModelRunnerSettingTab extends PluginSettingTab {
     );
   }
 
-  private renderModelsTab(containerEl: HTMLElement): void {
+  private async renderModelsTab(containerEl: HTMLElement): Promise<void> {
     containerEl.createEl('h3', { text: '🎯 模型管理' });
-    containerEl.createDiv({ text: '功能开发中...' });
+
+    const desc = containerEl.createDiv({ cls: 'setting-item-description' });
+    desc.setText('查看和管理当前源支持的模型，配置模型成本。');
+
+    // 检查配置是否加载
+    const config = this.plugin.configManager?.getConfig();
+    if (!config) {
+      const notice = containerEl.createDiv({ cls: 'mod-warning' });
+      notice.setText('⚠️ 配置未加载，请先启动服务器或切换源');
+      return;
+    }
+
+    // 显示当前源信息
+    const currentSource = config.sources.find(s => s.id === config.activeSourceId);
+    if (!currentSource) {
+      const notice = containerEl.createDiv({ cls: 'mod-warning' });
+      notice.setText('⚠️ 当前源不存在');
+      return;
+    }
+
+    const sourceInfo = containerEl.createDiv({ cls: 'model-source-info' });
+    sourceInfo.createEl('strong', { text: '当前源：' });
+    sourceInfo.createSpan({ text: currentSource.name });
+    sourceInfo.createSpan({ text: ` (${currentSource.baseUrl})` });
+
+    // 刷新按钮
+    new Setting(containerEl)
+      .setName('模型列表')
+      .setDesc('从当前源获取可用的模型列表')
+      .addButton((button) =>
+        button
+          .setButtonText('🔄 刷新模型列表')
+          .onClick(async () => {
+            button.setDisabled(true);
+            button.setButtonText('获取中...');
+            await this.loadAndDisplayModels(containerEl, currentSource);
+            button.setDisabled(false);
+            button.setButtonText('🔄 刷新模型列表');
+          })
+      );
+
+    // 模型列表容器
+    const modelsContainer = containerEl.createDiv({ cls: 'models-container' });
+
+    // 自动加载模型列表
+    await this.loadAndDisplayModels(modelsContainer, currentSource);
+  }
+
+  private async loadAndDisplayModels(containerEl: HTMLElement, source: any): Promise<void> {
+    // 清空容器
+    const modelsContainer = containerEl.querySelector('.models-list') as HTMLElement;
+    if (modelsContainer) {
+      modelsContainer.remove();
+    }
+
+    const loadingDiv = containerEl.createDiv({ cls: 'models-loading' });
+    loadingDiv.setText('⏳ 正在获取模型列表...');
+
+    try {
+      // 获取模型列表
+      const models = await this.fetchModels(source);
+
+      // 移除加载提示
+      loadingDiv.remove();
+
+      if (!models || models.length === 0) {
+        containerEl.createDiv({
+          cls: 'mod-warning',
+          text: '⚠️ 未找到可用模型'
+        });
+        return;
+      }
+
+      // 显示模型数量
+      const statsDiv = containerEl.createDiv({ cls: 'models-stats' });
+      statsDiv.setText(`✅ 找到 ${models.length} 个模型`);
+
+      // 搜索和过滤
+      this.renderModelFilters(containerEl);
+
+      // 渲染模型列表
+      this.renderModelsList(containerEl, models);
+
+    } catch (error) {
+      loadingDiv.remove();
+      const errorDiv = containerEl.createDiv({ cls: 'mod-error' });
+      errorDiv.setText(`❌ 获取模型列表失败: ${error.message}`);
+      console.error('[SettingsTab] 获取模型失败:', error);
+    }
+  }
+
+  private async fetchModels(source: any): Promise<any[]> {
+    const apiKey = source.apiKeys?.[0];
+    if (!apiKey) {
+      throw new Error('当前源没有 API Key');
+    }
+
+    const response = await fetch(`${source.baseUrl}/models`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.data || [];
+  }
+
+  private renderModelFilters(containerEl: HTMLElement): void {
+    const filtersDiv = containerEl.createDiv({ cls: 'models-filters' });
+
+    // 搜索框
+    new Setting(filtersDiv)
+      .setName('搜索模型')
+      .addSearch((search) => {
+        search.setPlaceholder('输入模型名称...');
+        search.onChange((value) => {
+          this.filterModels(value);
+        });
+      });
+  }
+
+  private filterModels(searchTerm: string): void {
+    const modelCards = document.querySelectorAll('.model-card');
+    const lowerSearch = searchTerm.toLowerCase();
+
+    modelCards.forEach((card) => {
+      const modelName = card.getAttribute('data-model-id')?.toLowerCase() || '';
+      const modelDisplay = card.textContent?.toLowerCase() || '';
+
+      if (modelName.includes(lowerSearch) || modelDisplay.includes(lowerSearch)) {
+        (card as HTMLElement).style.display = '';
+      } else {
+        (card as HTMLElement).style.display = 'none';
+      }
+    });
+  }
+
+  private renderModelsList(containerEl: HTMLElement, models: any[]): void {
+    const modelsListDiv = containerEl.createDiv({ cls: 'models-list' });
+
+    // 按 provider 分组
+    const groupedModels = this.groupModelsByProvider(models);
+
+    Object.keys(groupedModels).sort().forEach((provider) => {
+      const groupDiv = modelsListDiv.createDiv({ cls: 'model-group' });
+
+      // 分组标题
+      const groupHeader = groupDiv.createDiv({ cls: 'model-group-header' });
+      groupHeader.createEl('h4', { text: provider });
+      groupHeader.createSpan({
+        text: `${groupedModels[provider].length} 个模型`,
+        cls: 'model-count'
+      });
+
+      // 模型卡片
+      const groupModels = groupDiv.createDiv({ cls: 'model-group-models' });
+      groupedModels[provider].forEach((model) => {
+        this.renderModelCard(groupModels, model);
+      });
+    });
+  }
+
+  private groupModelsByProvider(models: any[]): Record<string, any[]> {
+    const grouped: Record<string, any[]> = {};
+
+    models.forEach((model) => {
+      // 从模型 ID 提取 provider（如 openai/gpt-4 -> openai）
+      const provider = this.extractProvider(model.id);
+
+      if (!grouped[provider]) {
+        grouped[provider] = [];
+      }
+      grouped[provider].push(model);
+    });
+
+    return grouped;
+  }
+
+  private extractProvider(modelId: string): string {
+    // 尝试从 ID 中提取 provider
+    if (modelId.includes('/')) {
+      return modelId.split('/')[0];
+    }
+
+    // 根据常见前缀判断
+    if (modelId.startsWith('gpt-')) return 'OpenAI';
+    if (modelId.startsWith('claude-')) return 'Anthropic';
+    if (modelId.startsWith('gemini-')) return 'Google';
+    if (modelId.startsWith('llama-')) return 'Meta';
+
+    return 'Other';
+  }
+
+  private renderModelCard(containerEl: HTMLElement, model: any): void {
+    const card = containerEl.createDiv({ cls: 'model-card' });
+    card.setAttribute('data-model-id', model.id);
+
+    // 模型基本信息
+    const infoDiv = card.createDiv({ cls: 'model-info' });
+
+    const nameDiv = infoDiv.createDiv({ cls: 'model-name' });
+    nameDiv.setText(model.id);
+
+    // 模型详情（如果有）
+    if (model.context_length || model.max_tokens) {
+      const detailsDiv = infoDiv.createDiv({ cls: 'model-details' });
+
+      if (model.context_length) {
+        const contextSpan = detailsDiv.createSpan({ cls: 'model-detail' });
+        contextSpan.setText(`📏 Context: ${this.formatNumber(model.context_length)}`);
+      }
+
+      if (model.max_tokens) {
+        const maxTokenSpan = detailsDiv.createSpan({ cls: 'model-detail' });
+        maxTokenSpan.setText(`🔢 Max: ${this.formatNumber(model.max_tokens)}`);
+      }
+    }
+
+    // 操作按钮
+    const actionsDiv = card.createDiv({ cls: 'model-actions' });
+
+    const configBtn = actionsDiv.createEl('button', {
+      text: '⚙️ 配置成本',
+      cls: 'mod-cta',
+    });
+    configBtn.onclick = () => {
+      this.openModelCostConfig(model);
+    };
+  }
+
+  private formatNumber(num: number): string {
+    if (num >= 1000000) {
+      return `${(num / 1000000).toFixed(1)}M`;
+    }
+    if (num >= 1000) {
+      return `${(num / 1000).toFixed(1)}K`;
+    }
+    return num.toString();
+  }
+
+  private openModelCostConfig(model: any): void {
+    new Notice(`配置 ${model.id} 的成本（功能开发中）`);
+    // TODO: 打开成本配置弹窗
   }
 
   private renderServicesTab(containerEl: HTMLElement): void {

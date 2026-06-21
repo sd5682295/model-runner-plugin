@@ -584,7 +584,133 @@
   padding: 16px 0;
 }
 
+/* Models Tab Styles */
+.model-source-info {
+  padding: 12px;
+  margin: 12px 0;
+  background: var(--background-secondary);
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+}
 
+.models-loading {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted);
+}
 
+.models-stats {
+  padding: 8px 12px;
+  margin: 12px 0;
+  background: var(--background-secondary-alt);
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: var(--text-muted);
+}
 
+.models-filters {
+  margin: 16px 0;
+}
+
+.models-list {
+  margin-top: 16px;
+}
+
+.model-group {
+  margin-bottom: 24px;
+}
+
+.model-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  background: var(--background-secondary);
+  border-radius: 6px;
+  border-left: 3px solid var(--interactive-accent);
+}
+
+.model-group-header h4 {
+  margin: 0;
+  font-size: 1.1em;
+  color: var(--text-normal);
+}
+
+.model-count {
+  font-size: 0.85em;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.model-group-models {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.model-card {
+  padding: 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--background-primary);
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.model-card:hover {
+  border-color: var(--interactive-accent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.model-info {
+  margin-bottom: 8px;
+}
+
+.model-name {
+  font-family: var(--font-monospace);
+  font-size: 0.9em;
+  font-weight: 500;
+  color: var(--text-normal);
+  margin-bottom: 6px;
+  word-break: break-all;
+}
+
+.model-details {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.model-detail {
+  font-size: 0.8em;
+  color: var(--text-muted);
+  padding: 2px 8px;
+  background: var(--background-secondary);
+  border-radius: 3px;
+}
+
+.model-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.model-actions button {
+  flex: 1;
+  padding: 4px 8px;
+  font-size: 0.85em;
+}
+
+.mod-error {
+  padding: 12px;
+  margin: 12px 0;
+  background: var(--background-modifier-error);
+  border-radius: 6px;
+  color: var(--text-error);
+}
 
