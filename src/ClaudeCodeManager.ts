@@ -82,7 +82,7 @@ export class ClaudeCodeManager {
   /**
    * 配置 ClaudeCode 使用 model-runner
    */
-  configureForModelRunner(port: number = 4000): boolean {
+  configureForModelRunner(port: number = 4000, sourceId?: string): boolean {
     const config = this.readConfig();
     if (!config) {
       console.error('[ClaudeCodeManager] 无法读取配置');
@@ -98,7 +98,14 @@ export class ClaudeCodeManager {
     const originalUrl = config.env.ANTHROPIC_BASE_URL;
 
     // 设置为本地 model-runner
-    config.env.ANTHROPIC_BASE_URL = `http://localhost:${port}`;
+    let baseUrl = `http://localhost:${port}`;
+
+    // 如果指定了源，添加到 URL 参数
+    if (sourceId) {
+      baseUrl += `?source=${sourceId}`;
+    }
+
+    config.env.ANTHROPIC_BASE_URL = baseUrl;
 
     // 移除 ANTHROPIC_AUTH_TOKEN（model-runner 不需要）
     // 但先保存一份到备注字段
@@ -110,6 +117,11 @@ export class ClaudeCodeManager {
     // 保存原始 URL
     if (originalUrl) {
       config.env._ORIGINAL_ANTHROPIC_BASE_URL = originalUrl;
+    }
+
+    // 保存选择的源 ID
+    if (sourceId) {
+      config.env._MODELRUNNER_SOURCE_ID = sourceId;
     }
 
     return this.saveConfig(config);
@@ -151,6 +163,7 @@ export class ClaudeCodeManager {
     isUsingModelRunner: boolean;
     currentUrl: string | null;
     originalUrl: string | null;
+    selectedSourceId: string | null;
   } {
     const config = this.readConfig();
 
@@ -160,11 +173,13 @@ export class ClaudeCodeManager {
         isUsingModelRunner: false,
         currentUrl: null,
         originalUrl: null,
+        selectedSourceId: null,
       };
     }
 
     const currentUrl = config.env?.ANTHROPIC_BASE_URL || null;
     const originalUrl = config.env?._ORIGINAL_ANTHROPIC_BASE_URL || null;
+    const selectedSourceId = config.env?._MODELRUNNER_SOURCE_ID || null;
     const isUsingModelRunner = currentUrl?.includes('localhost') || false;
 
     return {
@@ -172,6 +187,7 @@ export class ClaudeCodeManager {
       isUsingModelRunner,
       currentUrl,
       originalUrl,
+      selectedSourceId,
     };
   }
 

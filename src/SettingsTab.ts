@@ -4,6 +4,7 @@ import { AddSourceModal, EditSourceModal } from './SourceModals';
 import { ManageKeysModal } from './ManageKeysModal';
 import { ModelCostConfigModal } from './ModelCostConfigModal';
 import { ServiceConfigModal } from './ServiceConfigModal';
+import { ClaudeCodeSourceModal } from './ClaudeCodeSourceModal';
 
 export class ModelRunnerSettingTab extends PluginSettingTab {
   plugin: ModelRunnerPlugin;
@@ -522,6 +523,27 @@ export class ModelRunnerSettingTab extends PluginSettingTab {
     });
     statusBadge.setText(status.isUsingModelRunner ? '✅ 使用 model-runner' : '❌ 使用官方 API');
 
+    // 选择的源
+    if (status.selectedSourceId) {
+      const config = this.plugin.configManager?.getConfig();
+      const source = config?.sources.find(s => s.id === status.selectedSourceId);
+      const sourceName = source ? source.name : status.selectedSourceId;
+
+      const sourceRow = claudeCard.createDiv({ cls: 'service-detail-row' });
+      sourceRow.createSpan({ text: '使用源: ', cls: 'service-detail-label' });
+      sourceRow.createSpan({
+        text: sourceName,
+        cls: 'service-detail-value'
+      });
+    } else if (status.isUsingModelRunner) {
+      const sourceRow = claudeCard.createDiv({ cls: 'service-detail-row' });
+      sourceRow.createSpan({ text: '使用源: ', cls: 'service-detail-label' });
+      sourceRow.createSpan({
+        text: '自动选择（当前源）',
+        cls: 'service-detail-value'
+      });
+    }
+
     // 当前 URL
     if (status.currentUrl) {
       const urlRow = claudeCard.createDiv({ cls: 'service-detail-row' });
@@ -551,33 +573,21 @@ export class ModelRunnerSettingTab extends PluginSettingTab {
         text: '🔧 配置使用 model-runner',
         cls: 'mod-cta',
       });
-      configureBtn.onclick = async () => {
-        try {
-          configureBtn.disabled = true;
-          configureBtn.setText('配置中...');
-
-          const success = this.plugin.claudeCodeManager.configureForModelRunner(
-            this.plugin.settings.port
-          );
-
-          if (success) {
-            new Notice('✅ 已配置 Claude Code 使用 model-runner\n请重启 Claude Code 生效');
-            this.display(); // 刷新显示
-          } else {
-            new Notice('❌ 配置失败');
-            configureBtn.disabled = false;
-            configureBtn.setText('🔧 配置使用 model-runner');
-          }
-        } catch (error) {
-          new Notice('❌ 配置失败: ' + error);
-          configureBtn.disabled = false;
-          configureBtn.setText('🔧 配置使用 model-runner');
-        }
+      configureBtn.onclick = () => {
+        this.showClaudeCodeSourceModal();
       };
     } else {
+      // 切换源
+      const changeSourceBtn = claudeActions.createEl('button', {
+        text: '🔄 切换源',
+      });
+      changeSourceBtn.onclick = () => {
+        this.showClaudeCodeSourceModal();
+      };
+
       // 恢复使用官方 API
       const restoreBtn = claudeActions.createEl('button', {
-        text: '🔄 恢复使用官方 API',
+        text: '🔙 恢复官方 API',
         cls: 'mod-warning',
       });
       restoreBtn.onclick = async () => {
@@ -593,12 +603,12 @@ export class ModelRunnerSettingTab extends PluginSettingTab {
           } else {
             new Notice('❌ 恢复失败');
             restoreBtn.disabled = false;
-            restoreBtn.setText('🔄 恢复使用官方 API');
+            restoreBtn.setText('🔙 恢复官方 API');
           }
         } catch (error) {
           new Notice('❌ 恢复失败: ' + error);
           restoreBtn.disabled = false;
-          restoreBtn.setText('🔄 恢复使用官方 API');
+          restoreBtn.setText('🔙 恢复官方 API');
         }
       };
     }
@@ -610,6 +620,37 @@ export class ModelRunnerSettingTab extends PluginSettingTab {
     backupBtn.onclick = () => {
       this.showBackupManagementModal();
     };
+  }
+
+  private showClaudeCodeSourceModal(): void {
+    const status = this.plugin.claudeCodeManager.getConfigStatus();
+
+    const modal = new ClaudeCodeSourceModal(
+      this.app,
+      this.plugin,
+      status.selectedSourceId,
+      async (sourceId) => {
+        try {
+          const success = this.plugin.claudeCodeManager.configureForModelRunner(
+            this.plugin.settings.port,
+            sourceId || undefined
+          );
+
+          if (success) {
+            const sourceName = sourceId
+              ? this.plugin.configManager?.getConfig()?.sources.find(s => s.id === sourceId)?.name || sourceId
+              : '自动选择';
+            new Notice(`✅ 已配置使用 model-runner (源: ${sourceName})\n请重启 Claude Code 生效`);
+            this.display(); // 刷新显示
+          } else {
+            new Notice('❌ 配置失败');
+          }
+        } catch (error) {
+          new Notice('❌ 配置失败: ' + error);
+        }
+      }
+    );
+    modal.open();
   }
 
   private showBackupManagementModal(): void {
