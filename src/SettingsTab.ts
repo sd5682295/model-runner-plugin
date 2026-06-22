@@ -1062,14 +1062,77 @@ export class ModelRunnerSettingTab extends PluginSettingTab {
     // 获取所有配置
     const data = this.plugin.searchConfigManager?.readConfigs();
 
+    // 显示当前 .env 中的配置
+    try {
+      const envConfig = this.plugin.serviceManager.readServiceConfig('search-relay');
+
+      const currentEnvCard = contentEl.createDiv({ cls: 'service-card' });
+      currentEnvCard.createEl('h4', { text: '📄 当前 .env 配置' });
+
+      const envDetails = currentEnvCard.createDiv({ cls: 'service-details' });
+
+      if (envConfig.SEARCH_PROVIDER) {
+        const providerRow = envDetails.createDiv({ cls: 'service-detail-row' });
+        providerRow.createSpan({ text: '提供商: ', cls: 'service-detail-label' });
+        providerRow.createSpan({ text: envConfig.SEARCH_PROVIDER, cls: 'service-detail-value' });
+      }
+
+      // 根据提供商显示对应的配置
+      if (envConfig.SEARCH_PROVIDER === 'tavily') {
+        if (envConfig.TAVILY_BASE_URL) {
+          const urlRow = envDetails.createDiv({ cls: 'service-detail-row' });
+          urlRow.createSpan({ text: 'Base URL: ', cls: 'service-detail-label' });
+          urlRow.createSpan({ text: envConfig.TAVILY_BASE_URL, cls: 'service-detail-value' });
+        }
+        if (envConfig.TAVILY_API_KEY) {
+          const keyRow = envDetails.createDiv({ cls: 'service-detail-row' });
+          keyRow.createSpan({ text: 'API Key: ', cls: 'service-detail-label' });
+          keyRow.createSpan({ text: envConfig.TAVILY_API_KEY.substring(0, 12) + '...', cls: 'service-detail-value' });
+        }
+      } else if (envConfig.SEARCH_PROVIDER === 'google') {
+        if (envConfig.GOOGLE_API_KEY) {
+          const keyRow = envDetails.createDiv({ cls: 'service-detail-row' });
+          keyRow.createSpan({ text: 'API Key: ', cls: 'service-detail-label' });
+          keyRow.createSpan({ text: envConfig.GOOGLE_API_KEY.substring(0, 12) + '...', cls: 'service-detail-value' });
+        }
+        if (envConfig.GOOGLE_CX) {
+          const cxRow = envDetails.createDiv({ cls: 'service-detail-row' });
+          cxRow.createSpan({ text: 'CX: ', cls: 'service-detail-label' });
+          cxRow.createSpan({ text: envConfig.GOOGLE_CX, cls: 'service-detail-value' });
+        }
+      } else if (envConfig.SEARCH_PROVIDER === 'bing') {
+        if (envConfig.BING_API_KEY) {
+          const keyRow = envDetails.createDiv({ cls: 'service-detail-row' });
+          keyRow.createSpan({ text: 'API Key: ', cls: 'service-detail-label' });
+          keyRow.createSpan({ text: envConfig.BING_API_KEY.substring(0, 12) + '...', cls: 'service-detail-value' });
+        }
+      } else if (envConfig.SEARCH_PROVIDER === 'serper') {
+        if (envConfig.SERPER_API_KEY) {
+          const keyRow = envDetails.createDiv({ cls: 'service-detail-row' });
+          keyRow.createSpan({ text: 'API Key: ', cls: 'service-detail-label' });
+          keyRow.createSpan({ text: envConfig.SERPER_API_KEY.substring(0, 12) + '...', cls: 'service-detail-value' });
+        }
+      }
+
+      if (envConfig.RELAY_PORT) {
+        const portRow = envDetails.createDiv({ cls: 'service-detail-row' });
+        portRow.createSpan({ text: '端口: ', cls: 'service-detail-label' });
+        portRow.createSpan({ text: envConfig.RELAY_PORT, cls: 'service-detail-value' });
+      }
+    } catch (error) {
+      console.error('[SettingsTab] 读取 .env 失败:', error);
+    }
+
+    contentEl.createEl('h4', { text: '💾 已保存的配置' });
+
     if (!data || data.configs.length === 0) {
       const emptyNotice = contentEl.createDiv({ cls: 'mod-warning' });
-      emptyNotice.setText('暂无搜索配置，请先添加');
+      emptyNotice.setText('暂无已保存的配置，请添加配置以便快速切换');
     } else {
       // 当前配置选择
       new Setting(contentEl)
-        .setName('当前配置')
-        .setDesc('选择要使用的搜索配置（会写入 .env 文件）')
+        .setName('快速切换')
+        .setDesc('选择已保存的配置（会覆盖 .env 文件）')
         .addDropdown((dropdown) => {
           data.configs.forEach((config) => {
             dropdown.addOption(config.id, config.name);
