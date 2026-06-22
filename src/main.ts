@@ -5,7 +5,6 @@ import { ConfigManager } from './ConfigManager';
 import { ServiceManager } from './ServiceManager';
 import { ClaudeCodeManager } from './ClaudeCodeManager';
 import { StatsManager } from './StatsManager';
-import { SearchSourceManager } from './SearchSourceManager';
 import { ModelRunnerSettingTab } from './SettingsTab';
 import { DEFAULT_SETTINGS, type PluginSettings } from './constants';
 import * as path from 'path';
@@ -17,7 +16,6 @@ export default class ModelRunnerPlugin extends Plugin {
   serviceManager!: ServiceManager;
   claudeCodeManager!: ClaudeCodeManager;
   statsManager?: StatsManager;
-  searchSourceManager?: SearchSourceManager;
   statusBarItem!: HTMLElement;
   view: ModelRunnerView | null = null;
   serverDir!: string;
@@ -56,9 +54,6 @@ export default class ModelRunnerPlugin extends Plugin {
 
     // 初始化统计管理器
     this.statsManager = new StatsManager(serverDir);
-
-    // 初始化搜索源管理器
-    this.searchSourceManager = new SearchSourceManager(serverDir);
 
     this.processManager = new ProcessManager(
       serverDir,
