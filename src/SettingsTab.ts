@@ -381,6 +381,9 @@ export class ModelRunnerSettingTab extends PluginSettingTab {
       this.renderServiceCard(servicesContainer, service);
     });
 
+    // 搜索源配置区域
+    this.renderSearchSourcesConfig(containerEl);
+
     // Claude Code 配置区域
     this.renderClaudeCodeConfig(containerEl);
   }
@@ -1068,6 +1071,177 @@ export class ModelRunnerSettingTab extends PluginSettingTab {
         this.display();
       } catch (error) {
         new Notice('更新失败: ' + error);
+      }
+    }).open();
+  }
+
+  private renderSearchSourcesConfig(containerEl: HTMLElement): void {
+    containerEl.createEl('h4', { text: '🔍 搜索源配置' });
+
+    const searchDesc = containerEl.createDiv({ cls: 'setting-item-description' });
+    searchDesc.setText('配置搜索 API 源（Google、Bing、Tavily 等），支持测试连接和切换。');
+
+    // 获取搜索源配置
+    const config = this.plugin.searchSourceManager?.readConfig();
+
+    if (!config || config.sources.length === 0) {
+      const emptyCard = containerEl.createDiv({ cls: 'service-card' });
+      emptyCard.createDiv({ text: '暂无搜索源配置' });
+
+      // 添加按钮
+      const addBtn = emptyCard.createEl('button', {
+        text: '➕ 添加搜索源',
+        cls: 'mod-cta',
+      });
+      addBtn.onclick = () => {
+        this.showAddSearchSourceModal();
+      };
+      return;
+    }
+
+    // 当前源选择
+    new Setting(containerEl)
+      .setName('当前搜索源')
+      .setDesc('选择当前使用的搜索 API 源')
+      .addDropdown((dropdown) => {
+        config.sources.forEach((source) => {
+          dropdown.addOption(source.id, source.name);
+        });
+        dropdown.setValue(config.activeSourceId).onChange(async (value) => {
+          try {
+            await this.plugin.searchSourceManager?.switchSource(value);
+            const sourceName = config.sources.find(s => s.id === value)?.name || value;
+            new Notice(`✅ 已切换到: ${sourceName}`);
+          } catch (error) {
+            new Notice(`❌ 切换失败: ${error}`);
+          }
+        });
+      });
+
+    // 搜索源列表
+    const sourcesContainer = containerEl.createDiv({ cls: 'search-sources-container' });
+
+    config.sources.forEach((source) => {
+      const sourceCard = sourcesContainer.createDiv({ cls: 'service-card' });
+
+      // 源头部
+      const sourceHeader = sourceCard.createDiv({ cls: 'service-header' });
+      const sourceName = sourceHeader.createDiv({ cls: 'service-name' });
+      sourceName.setText(source.name);
+
+      if (source.id === config.activeSourceId) {
+        sourceName.createSpan({ text: ' (当前)', cls: 'source-current-badge' });
+      }
+
+      // 源详情
+      const sourceDetails = sourceCard.createDiv({ cls: 'service-details' });
+
+      const providerRow = sourceDetails.createDiv({ cls: 'service-detail-row' });
+      providerRow.createSpan({ text: '提供商: ', cls: 'service-detail-label' });
+      providerRow.createSpan({ text: source.provider, cls: 'service-detail-value' });
+
+      const urlRow = sourceDetails.createDiv({ cls: 'service-detail-row' });
+      urlRow.createSpan({ text: 'URL: ', cls: 'service-detail-label' });
+      urlRow.createSpan({ text: source.baseUrl, cls: 'service-detail-value' });
+
+      const statusRow = sourceDetails.createDiv({ cls: 'service-detail-row' });
+      statusRow.createSpan({ text: '状态: ', cls: 'service-detail-label' });
+      const statusBadge = statusRow.createSpan({
+        cls: 'service-status ' + (source.enabled ? 'status-running' : 'status-stopped')
+      });
+      statusBadge.setText(source.enabled ? '✅ 已启用' : '❌ 已禁用');
+
+      // 操作按钮
+      const sourceActions = sourceCard.createDiv({ cls: 'service-actions' });
+
+      // 测试连接
+      const testBtn = sourceActions.createEl('button', {
+        text: '🔍 测试连接',
+      });
+      testBtn.onclick = async () => {
+        try {
+          testBtn.disabled = true;
+          testBtn.setText('测试中...');
+
+          const result = await this.plugin.searchSourceManager?.testConnection(source, 'hello world');
+
+          if (result?.success) {
+            new Notice('✅ 连接成功！');
+          } else {
+            new Notice(`❌ 连接失败: ${result?.message}`);
+          }
+
+          testBtn.disabled = false;
+          testBtn.setText('🔍 测试连接');
+        } catch (error) {
+          new Notice(`❌ 测试失败: ${error}`);
+          testBtn.disabled = false;
+          testBtn.setText('🔍 测试连接');
+        }
+      };
+
+      // 编辑
+      const editBtn = sourceActions.createEl('button', {
+        text: '✏️ 编辑',
+      });
+      editBtn.onclick = () => {
+        this.showEditSearchSourceModal(source.id, source);
+      };
+
+      // 删除
+      if (source.id !== config.activeSourceId) {
+        const deleteBtn = sourceActions.createEl('button', {
+          text: '🗑️ 删除',
+          cls: 'mod-warning',
+        });
+        deleteBtn.onclick = async () => {
+          const confirmed = confirm(`确定要删除搜索源 "${source.name}" 吗？`);
+          if (confirmed) {
+            try {
+              await this.plugin.searchSourceManager?.deleteSource(source.id);
+              new Notice(`✅ 已删除: ${source.name}`);
+              this.display();
+            } catch (error) {
+              new Notice(`❌ 删除失败: ${error}`);
+            }
+          }
+        };
+      }
+    });
+
+    // 添加新源按钮
+    new Setting(containerEl).addButton((button) =>
+      button
+        .setButtonText('➕ 添加搜索源')
+        .setCta()
+        .onClick(() => {
+          this.showAddSearchSourceModal();
+        })
+    );
+  }
+
+  private showAddSearchSourceModal(): void {
+    const { AddSearchSourceModal } = require('./SearchSourceModals');
+    new AddSearchSourceModal(this.app, this.plugin, async (source) => {
+      try {
+        await this.plugin.searchSourceManager?.addSource(source);
+        new Notice(`✅ 已添加搜索源: ${source.name}`);
+        this.display();
+      } catch (error) {
+        new Notice(`❌ 添加失败: ${error}`);
+      }
+    }).open();
+  }
+
+  private showEditSearchSourceModal(sourceId: string, source: any): void {
+    const { EditSearchSourceModal } = require('./SearchSourceModals');
+    new EditSearchSourceModal(this.app, this.plugin, sourceId, source, async (updatedSource) => {
+      try {
+        await this.plugin.searchSourceManager?.updateSource(sourceId, updatedSource);
+        new Notice(`✅ 已更新搜索源: ${updatedSource.name}`);
+        this.display();
+      } catch (error) {
+        new Notice(`❌ 更新失败: ${error}`);
       }
     }).open();
   }
