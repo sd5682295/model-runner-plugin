@@ -25,7 +25,7 @@ export class ClaudeCodeSourceModal extends Modal {
     contentEl.createEl('h2', { text: '🔧 配置 ClaudeCode 源' });
 
     const description = contentEl.createDiv({ cls: 'setting-item-description' });
-    description.setText('选择 ClaudeCode 使用的 model-runner 源');
+    description.setText('选择 ClaudeCode 使用的 API 源（将直接修改 baseUrl 和 apiKey）');
 
     // 获取源列表
     const config = this.plugin.configManager?.getConfig();
@@ -38,17 +38,14 @@ export class ClaudeCodeSourceModal extends Modal {
     // 源选择
     new Setting(contentEl)
       .setName('选择源')
-      .setDesc('ClaudeCode 将使用这个源发送请求')
+      .setDesc('ClaudeCode 将使用这个源的 baseUrl 和 API Key')
       .addDropdown((dropdown) => {
-        // 添加"自动选择"选项
-        dropdown.addOption('', '自动选择（使用当前源）');
-
         // 添加所有源
         config.sources.forEach((source) => {
           dropdown.addOption(source.id, source.name);
         });
 
-        dropdown.setValue(this.selectedSourceId).onChange((value) => {
+        dropdown.setValue(this.selectedSourceId || config.sources[0].id).onChange((value) => {
           this.selectedSourceId = value;
         });
       });
@@ -64,20 +61,26 @@ export class ClaudeCodeSourceModal extends Modal {
       sourceName.setText(source.name);
 
       if (source.id === config.activeSourceId) {
-        sourceName.createSpan({ text: ' (当前源)', cls: 'source-current-badge' });
+        sourceName.createSpan({ text: ' (当前 model-runner 使用)', cls: 'source-current-badge' });
       }
 
       const sourceUrl = sourceItem.createDiv({ cls: 'source-preview-url' });
       sourceUrl.setText(source.baseUrl);
+
+      const sourceKeys = sourceItem.createDiv({ cls: 'source-preview-keys' });
+      sourceKeys.setText(`API Keys: ${source.apiKeys?.length || 0} 个`);
+      sourceKeys.style.fontSize = '0.85em';
+      sourceKeys.style.color = 'var(--text-muted)';
     });
 
     // 说明文字
     const helpText = contentEl.createDiv({ cls: 'setting-item-description' });
     helpText.style.marginTop = '16px';
     helpText.innerHTML = `
-      <strong>💡 提示：</strong><br>
-      • 选择"自动选择"时，ClaudeCode 将使用 model-runner 的当前源<br>
-      • 选择特定源时，ClaudeCode 将固定使用该源（不受当前源切换影响）<br>
+      <strong>💡 说明：</strong><br>
+      • ClaudeCode 将使用选定源的 <code>baseUrl</code> 和 <code>apiKey</code><br>
+      • baseUrl 会去掉 <code>/v1</code> 后缀（ClaudeCode 会自动添加）<br>
+      • 使用源的第一个 API Key<br>
       • 配置后需要重启 Claude Code 才能生效
     `;
 

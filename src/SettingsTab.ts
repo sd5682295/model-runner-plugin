@@ -500,7 +500,7 @@ export class ModelRunnerSettingTab extends PluginSettingTab {
     containerEl.createEl('h4', { text: '💻 Claude Code 配置' });
 
     const claudeDesc = containerEl.createDiv({ cls: 'setting-item-description' });
-    claudeDesc.setText('配置 Claude Code 使用本地 model-runner 作为 API 后端');
+    claudeDesc.setText('配置 Claude Code 使用 model-runner 记录的源（直接修改 baseUrl 和 apiKey）');
 
     const claudeCard = containerEl.createDiv({ cls: 'service-card' });
 
@@ -519,27 +519,20 @@ export class ModelRunnerSettingTab extends PluginSettingTab {
     const statusRow = claudeCard.createDiv({ cls: 'service-detail-row' });
     statusRow.createSpan({ text: '当前状态: ', cls: 'service-detail-label' });
     const statusBadge = statusRow.createSpan({
-      cls: 'service-status ' + (status.isUsingModelRunner ? 'status-running' : 'status-stopped')
+      cls: 'service-status ' + (status.isUsingCustomSource ? 'status-running' : 'status-stopped')
     });
-    statusBadge.setText(status.isUsingModelRunner ? '✅ 使用 model-runner' : '❌ 使用官方 API');
+    statusBadge.setText(status.isUsingCustomSource ? '✅ 使用自定义源' : '❌ 使用原始配置');
 
-    // 选择的源
-    if (status.selectedSourceId) {
+    // 当前使用的源
+    if (status.currentSourceId) {
       const config = this.plugin.configManager?.getConfig();
-      const source = config?.sources.find(s => s.id === status.selectedSourceId);
-      const sourceName = source ? source.name : status.selectedSourceId;
+      const source = config?.sources.find(s => s.id === status.currentSourceId);
+      const sourceName = source ? source.name : status.currentSourceId;
 
       const sourceRow = claudeCard.createDiv({ cls: 'service-detail-row' });
       sourceRow.createSpan({ text: '使用源: ', cls: 'service-detail-label' });
       sourceRow.createSpan({
         text: sourceName,
-        cls: 'service-detail-value'
-      });
-    } else if (status.isUsingModelRunner) {
-      const sourceRow = claudeCard.createDiv({ cls: 'service-detail-row' });
-      sourceRow.createSpan({ text: '使用源: ', cls: 'service-detail-label' });
-      sourceRow.createSpan({
-        text: '自动选择（当前源）',
         cls: 'service-detail-value'
       });
     }
@@ -567,10 +560,10 @@ export class ModelRunnerSettingTab extends PluginSettingTab {
     // 操作按钮
     const claudeActions = claudeCard.createDiv({ cls: 'service-actions' });
 
-    if (!status.isUsingModelRunner) {
-      // 配置使用 model-runner
+    if (!status.isUsingCustomSource) {
+      // 配置使用源
       const configureBtn = claudeActions.createEl('button', {
-        text: '🔧 配置使用 model-runner',
+        text: '🔧 配置使用源',
         cls: 'mod-cta',
       });
       configureBtn.onclick = () => {
@@ -585,9 +578,9 @@ export class ModelRunnerSettingTab extends PluginSettingTab {
         this.showClaudeCodeSourceModal();
       };
 
-      // 恢复使用官方 API
+      // 恢复原始配置
       const restoreBtn = claudeActions.createEl('button', {
-        text: '🔙 恢复官方 API',
+        text: '🔙 恢复原始配置',
         cls: 'mod-warning',
       });
       restoreBtn.onclick = async () => {
@@ -598,17 +591,17 @@ export class ModelRunnerSettingTab extends PluginSettingTab {
           const success = this.plugin.claudeCodeManager.restoreOriginalConfig();
 
           if (success) {
-            new Notice('✅ 已恢复使用官方 API\n请重启 Claude Code 生效');
+            new Notice('✅ 已恢复原始配置\n请重启 Claude Code 生效');
             this.display(); // 刷新显示
           } else {
             new Notice('❌ 恢复失败');
             restoreBtn.disabled = false;
-            restoreBtn.setText('🔙 恢复官方 API');
+            restoreBtn.setText('🔙 恢复原始配置');
           }
         } catch (error) {
           new Notice('❌ 恢复失败: ' + error);
           restoreBtn.disabled = false;
-          restoreBtn.setText('🔙 恢复官方 API');
+          restoreBtn.setText('🔙 恢复原始配置');
         }
       };
     }
@@ -628,19 +621,40 @@ export class ModelRunnerSettingTab extends PluginSettingTab {
     const modal = new ClaudeCodeSourceModal(
       this.app,
       this.plugin,
-      status.selectedSourceId,
+      status.currentSourceId,
       async (sourceId) => {
         try {
-          const success = this.plugin.claudeCodeManager.configureForModelRunner(
-            this.plugin.settings.port,
-            sourceId || undefined
+          // 获取选择的源
+          const config = this.plugin.configManager?.getConfig();
+          const source = config?.sources.find(s => s.id === sourceId);
+
+          if (!source) {
+            new Notice('❌ 找不到选择的源');
+            return;
+          }
+
+          // 获取源的 baseUrl（去掉 /v1）
+          let baseUrl = source.baseUrl;
+          if (baseUrl.endsWith('/v1')) {
+            baseUrl = baseUrl.slice(0, -3);
+          }
+
+          // 获取第一个 API Key
+          const apiKey = source.apiKeys?.[0];
+          if (!apiKey) {
+            new Notice('❌ 该源没有配置 API Key');
+            return;
+          }
+
+          // 配置 ClaudeCode
+          const success = this.plugin.claudeCodeManager.configureForSource(
+            baseUrl,
+            apiKey,
+            sourceId
           );
 
           if (success) {
-            const sourceName = sourceId
-              ? this.plugin.configManager?.getConfig()?.sources.find(s => s.id === sourceId)?.name || sourceId
-              : '自动选择';
-            new Notice(`✅ 已配置使用 model-runner (源: ${sourceName})\n请重启 Claude Code 生效`);
+            new Notice(`✅ 已配置使用源: ${source.name}\n请重启 Claude Code 生效`);
             this.display(); // 刷新显示
           } else {
             new Notice('❌ 配置失败');
