@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
+import { App, PluginSettingTab, Setting, Notice, Modal } from 'obsidian';
 import type ModelRunnerPlugin from './main';
 import { AddSourceModal, EditSourceModal } from './SourceModals';
 import { ManageKeysModal } from './ManageKeysModal';
@@ -547,61 +547,43 @@ export class ModelRunnerSettingTab extends PluginSettingTab {
       });
     }
 
-    // 原始 URL（如果有）
-    if (status.originalUrl) {
-      const originalUrlRow = claudeCard.createDiv({ cls: 'service-detail-row' });
-      originalUrlRow.createSpan({ text: '原始 URL: ', cls: 'service-detail-label' });
-      originalUrlRow.createSpan({
-        text: status.originalUrl,
-        cls: 'service-detail-value'
-      });
-    }
-
     // 操作按钮
     const claudeActions = claudeCard.createDiv({ cls: 'service-actions' });
 
-    if (!status.isUsingCustomSource) {
-      // 配置使用源
-      const configureBtn = claudeActions.createEl('button', {
-        text: '🔧 配置使用源',
-        cls: 'mod-cta',
-      });
-      configureBtn.onclick = () => {
-        this.showClaudeCodeSourceModal();
-      };
-    } else {
-      // 切换源
-      const changeSourceBtn = claudeActions.createEl('button', {
-        text: '🔄 切换源',
-      });
-      changeSourceBtn.onclick = () => {
-        this.showClaudeCodeSourceModal();
-      };
+    // 切换源
+    const changeSourceBtn = claudeActions.createEl('button', {
+      text: status.isUsingCustomSource ? '🔄 切换源' : '🔧 配置使用源',
+      cls: status.isUsingCustomSource ? '' : 'mod-cta',
+    });
+    changeSourceBtn.onclick = () => {
+      this.showClaudeCodeSourceModal();
+    };
 
-      // 恢复原始配置
-      const restoreBtn = claudeActions.createEl('button', {
-        text: '🔙 恢复原始配置',
+    // 如果正在使用自定义源，显示清除按钮
+    if (status.isUsingCustomSource) {
+      const clearBtn = claudeActions.createEl('button', {
+        text: '🗑️ 清除标记',
         cls: 'mod-warning',
       });
-      restoreBtn.onclick = async () => {
+      clearBtn.onclick = async () => {
         try {
-          restoreBtn.disabled = true;
-          restoreBtn.setText('恢复中...');
+          clearBtn.disabled = true;
+          clearBtn.setText('清除中...');
 
           const success = this.plugin.claudeCodeManager.restoreOriginalConfig();
 
           if (success) {
-            new Notice('✅ 已恢复原始配置\n请重启 Claude Code 生效');
+            new Notice('✅ 已清除源标记');
             this.display(); // 刷新显示
           } else {
-            new Notice('❌ 恢复失败');
-            restoreBtn.disabled = false;
-            restoreBtn.setText('🔙 恢复原始配置');
+            new Notice('❌ 清除失败');
+            clearBtn.disabled = false;
+            clearBtn.setText('🗑️ 清除标记');
           }
         } catch (error) {
-          new Notice('❌ 恢复失败: ' + error);
-          restoreBtn.disabled = false;
-          restoreBtn.setText('🔙 恢复原始配置');
+          new Notice('❌ 清除失败: ' + error);
+          clearBtn.disabled = false;
+          clearBtn.setText('🗑️ 清除标记');
         }
       };
     }
@@ -1060,28 +1042,156 @@ export class ModelRunnerSettingTab extends PluginSettingTab {
 
   private showServiceConfigModal(service: any): void {
     if (service.name === 'search-relay') {
-      this.showSearchRelayConfigModal();
+      this.showSearchRelayConfigsModal();
     } else {
       new Notice('暂不支持配置此服务');
     }
   }
 
-  private async showSearchRelayConfigModal(): Promise<void> {
-    try {
-      // 读取当前配置
-      const currentConfig = await this.plugin.serviceManager.readServiceConfig('search-relay');
+  private showSearchRelayConfigsModal(): void {
+    // 显示搜索配置管理界面
+    const modal = new Modal(this.app);
+    const { contentEl } = modal;
 
-      const { SearchRelayConfigModal } = require('./SearchRelayConfigModal');
-      new SearchRelayConfigModal(this.app, this.plugin, currentConfig, async (newConfig) => {
-        try {
-          await this.plugin.serviceManager.saveServiceConfig('search-relay', newConfig);
-          new Notice('✅ 配置已保存\n重启 search-relay 服务生效');
-        } catch (error) {
-          new Notice(`❌ 保存失败: ${error}`);
+    contentEl.empty();
+    contentEl.createEl('h2', { text: '🔍 搜索配置管理' });
+
+    const desc = contentEl.createDiv({ cls: 'setting-item-description' });
+    desc.setText('管理多个搜索 API 配置，快速切换使用不同的搜索源。');
+
+    // 获取所有配置
+    const data = this.plugin.searchConfigManager?.readConfigs();
+
+    if (!data || data.configs.length === 0) {
+      const emptyNotice = contentEl.createDiv({ cls: 'mod-warning' });
+      emptyNotice.setText('暂无搜索配置，请先添加');
+    } else {
+      // 当前配置选择
+      new Setting(contentEl)
+        .setName('当前配置')
+        .setDesc('选择要使用的搜索配置（会写入 .env 文件）')
+        .addDropdown((dropdown) => {
+          data.configs.forEach((config) => {
+            dropdown.addOption(config.id, config.name);
+          });
+          dropdown.setValue(data.activeConfigId).onChange(async (value) => {
+            try {
+              this.plugin.searchConfigManager?.switchConfig(
+                value,
+                'D:\\work\\search-relay\\.env'
+              );
+              new Notice(`✅ 已切换到: ${data.configs.find(c => c.id === value)?.name}\n请重启 search-relay 服务生效`);
+              modal.close();
+              this.showSearchRelayConfigsModal(); // 刷新
+            } catch (error) {
+              new Notice(`❌ 切换失败: ${error}`);
+            }
+          });
+        });
+
+      // 配置列表
+      const configsContainer = contentEl.createDiv({ cls: 'search-configs-list' });
+
+      data.configs.forEach((config) => {
+        const configCard = configsContainer.createDiv({ cls: 'service-card' });
+
+        // 配置头部
+        const configHeader = configCard.createDiv({ cls: 'service-header' });
+        const configName = configHeader.createDiv({ cls: 'service-name' });
+        configName.setText(config.name);
+
+        if (config.id === data.activeConfigId) {
+          configName.createSpan({ text: ' (当前)', cls: 'source-current-badge' });
         }
-      }).open();
-    } catch (error) {
-      new Notice(`❌ 读取配置失败: ${error}`);
+
+        // 配置详情
+        const configDetails = configCard.createDiv({ cls: 'service-details' });
+
+        const providerRow = configDetails.createDiv({ cls: 'service-detail-row' });
+        providerRow.createSpan({ text: '提供商: ', cls: 'service-detail-label' });
+        providerRow.createSpan({ text: config.provider, cls: 'service-detail-value' });
+
+        const urlRow = configDetails.createDiv({ cls: 'service-detail-row' });
+        urlRow.createSpan({ text: 'URL: ', cls: 'service-detail-label' });
+        urlRow.createSpan({ text: config.baseUrl, cls: 'service-detail-value' });
+
+        // 操作按钮
+        const configActions = configCard.createDiv({ cls: 'service-actions' });
+
+        // 编辑
+        const editBtn = configActions.createEl('button', { text: '✏️ 编辑' });
+        editBtn.onclick = () => {
+          modal.close();
+          this.showEditSearchConfigModal(config);
+        };
+
+        // 删除
+        if (config.id !== data.activeConfigId) {
+          const deleteBtn = configActions.createEl('button', {
+            text: '🗑️ 删除',
+            cls: 'mod-warning',
+          });
+          deleteBtn.onclick = () => {
+            if (confirm(`确定要删除配置 "${config.name}" 吗？`)) {
+              try {
+                this.plugin.searchConfigManager?.deleteConfig(config.id);
+                new Notice(`✅ 已删除: ${config.name}`);
+                modal.close();
+                this.showSearchRelayConfigsModal(); // 刷新
+              } catch (error) {
+                new Notice(`❌ 删除失败: ${error}`);
+              }
+            }
+          };
+        }
+      });
     }
+
+    // 添加新配置按钮
+    new Setting(contentEl).addButton((button) =>
+      button
+        .setButtonText('➕ 添加配置')
+        .setCta()
+        .onClick(() => {
+          modal.close();
+          this.showAddSearchConfigModal();
+        })
+    );
+
+    // 关闭按钮
+    const closeBtn = contentEl.createEl('button', {
+      text: '关闭',
+      cls: 'mod-cta',
+    });
+    closeBtn.style.marginTop = '16px';
+    closeBtn.onclick = () => modal.close();
+
+    modal.open();
+  }
+
+  private showAddSearchConfigModal(): void {
+    const { AddSearchConfigModal } = require('./SearchConfigModals');
+    new AddSearchConfigModal(this.app, this.plugin, (config) => {
+      try {
+        this.plugin.searchConfigManager?.addConfig(config);
+        new Notice(`✅ 已添加配置: ${config.name}`);
+        this.showSearchRelayConfigsModal();
+      } catch (error) {
+        new Notice(`❌ 添加失败: ${error}`);
+      }
+    }).open();
+  }
+
+  private showEditSearchConfigModal(config: any): void {
+    const { EditSearchConfigModal } = require('./SearchConfigModals');
+    new EditSearchConfigModal(this.app, this.plugin, config, (updatedConfig) => {
+      try {
+        this.plugin.searchConfigManager?.updateConfig(config.id, updatedConfig);
+        new Notice(`✅ 已更新配置: ${updatedConfig.name}`);
+        this.showSearchRelayConfigsModal();
+      } catch (error) {
+        new Notice(`❌ 更新失败: ${error}`);
+      }
+    }).open();
   }
 }

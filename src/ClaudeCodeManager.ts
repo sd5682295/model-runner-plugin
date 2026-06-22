@@ -97,27 +97,24 @@ export class ClaudeCodeManager {
       config.env = {};
     }
 
-    // 保存原有配置（如果没有保存过）
-    if (!config.env._ORIGINAL_ANTHROPIC_BASE_URL) {
-      config.env._ORIGINAL_ANTHROPIC_BASE_URL = config.env.ANTHROPIC_BASE_URL;
-    }
-    if (!config.env._ORIGINAL_ANTHROPIC_AUTH_TOKEN) {
-      config.env._ORIGINAL_ANTHROPIC_AUTH_TOKEN = config.env.ANTHROPIC_AUTH_TOKEN;
-    }
-
-    // 设置为指定源的配置
+    // 直接设置为指定源的配置（不保存原始值）
     // 注意：不添加 /v1，因为 ClaudeCode 会自动添加
     config.env.ANTHROPIC_BASE_URL = sourceBaseUrl;
     config.env.ANTHROPIC_AUTH_TOKEN = sourceApiKey;
 
-    // 记录使用的源 ID
+    // 记录使用的源 ID（用于显示）
     config.env._CURRENT_SOURCE_ID = sourceId;
+
+    // 清理可能存在的旧的 _ORIGINAL_ 字段
+    delete config.env._ORIGINAL_ANTHROPIC_BASE_URL;
+    delete config.env._ORIGINAL_ANTHROPIC_AUTH_TOKEN;
 
     return this.saveConfig(config);
   }
 
   /**
    * 恢复 ClaudeCode 使用原始配置
+   * 注意：现在直接覆盖，没有保存原始配置，此方法仅清理 _CURRENT_SOURCE_ID
    */
   restoreOriginalConfig(): boolean {
     const config = this.readConfig();
@@ -130,20 +127,17 @@ export class ClaudeCodeManager {
       config.env = {};
     }
 
-    // 恢复原始配置
-    if (config.env._ORIGINAL_ANTHROPIC_BASE_URL) {
-      config.env.ANTHROPIC_BASE_URL = config.env._ORIGINAL_ANTHROPIC_BASE_URL;
-      delete config.env._ORIGINAL_ANTHROPIC_BASE_URL;
-    }
-
-    if (config.env._ORIGINAL_ANTHROPIC_AUTH_TOKEN) {
-      config.env.ANTHROPIC_AUTH_TOKEN = config.env._ORIGINAL_ANTHROPIC_AUTH_TOKEN;
-      delete config.env._ORIGINAL_ANTHROPIC_AUTH_TOKEN;
-    }
-
     // 清理源 ID 记录
     if (config.env._CURRENT_SOURCE_ID) {
       delete config.env._CURRENT_SOURCE_ID;
+    }
+
+    // 清理可能存在的旧字段
+    if (config.env._ORIGINAL_ANTHROPIC_BASE_URL) {
+      delete config.env._ORIGINAL_ANTHROPIC_BASE_URL;
+    }
+    if (config.env._ORIGINAL_ANTHROPIC_AUTH_TOKEN) {
+      delete config.env._ORIGINAL_ANTHROPIC_AUTH_TOKEN;
     }
 
     return this.saveConfig(config);
@@ -157,7 +151,6 @@ export class ClaudeCodeManager {
     isUsingCustomSource: boolean;
     currentUrl: string | null;
     currentSourceId: string | null;
-    originalUrl: string | null;
   } {
     const config = this.readConfig();
 
@@ -167,23 +160,20 @@ export class ClaudeCodeManager {
         isUsingCustomSource: false,
         currentUrl: null,
         currentSourceId: null,
-        originalUrl: null,
       };
     }
 
     const currentUrl = config.env?.ANTHROPIC_BASE_URL || null;
     const currentSourceId = config.env?._CURRENT_SOURCE_ID || null;
-    const originalUrl = config.env?._ORIGINAL_ANTHROPIC_BASE_URL || null;
 
-    // 判断是否使用了自定义源（有原始配置保存）
-    const isUsingCustomSource = !!originalUrl;
+    // 判断是否使用了自定义源（有 _CURRENT_SOURCE_ID 标记）
+    const isUsingCustomSource = !!currentSourceId;
 
     return {
       hasConfig: true,
       isUsingCustomSource,
       currentUrl,
       currentSourceId,
-      originalUrl,
     };
   }
 
