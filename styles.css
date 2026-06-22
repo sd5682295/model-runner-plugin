@@ -848,6 +848,133 @@
 
 .monitor-card h4 {
   margin-top: 0;
+  margin-bottom: 12px;
+  color: var(--text-normal);
+}
+
+.monitor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.monitor-box {
+  padding: 12px;
+  background: var(--background-primary);
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+}
+
+.monitor-label {
+  font-size: 0.85em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.monitor-value {
+  font-size: 1.4em;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+
+.monitor-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.monitor-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+.monitor-table th {
+  text-align: left;
+  padding: 8px;
+  background: var(--background-primary);
+  border-bottom: 2px solid var(--background-modifier-border);
+  font-weight: 600;
+  color: var(--text-normal);
+}
+
+.monitor-table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  color: var(--text-normal);
+}
+
+.monitor-table tbody tr:hover {
+  background: var(--background-primary);
+}
+
+.monitor-logs-table {
+  font-size: 0.9em;
+}
+
+.monitor-detail {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.monitor-detail h5 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 0.95em;
+  color: var(--text-muted);
+}
+
+.monitor-refresh {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.monitor-refresh button {
+  padding: 6px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  transition: all 0.2s;
+}
+
+.monitor-refresh button:hover {
+  background: var(--background-modifier-hover);
+}
+
+.monitor-refresh button.mod-cta {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: var(--interactive-accent);
+}
+
+.monitor-refresh button.mod-warning {
+  background: #ef4444;
+  color: white;
+  border-color: #ef4444;
+}
+
+.monitor-refresh button.mod-warning:hover {
+  background: #dc2626;
+}
+
+/* Monitor Tab Styles */
+.monitor-card {
+  margin: 16px 0;
+  padding: 16px;
+  background: var(--background-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border);
+}
+
+.monitor-card h4 {
+  margin-top: 0;
   margin-bottom: 16px;
   color: var(--text-normal);
 }
