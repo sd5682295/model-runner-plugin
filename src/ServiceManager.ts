@@ -151,14 +151,17 @@ export class ServiceManager {
 
       const response = await fetch(config.healthCheckUrl, {
         method: 'GET',
-        mode: 'no-cors', // 解决 CORS 问题
         signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
 
-      // no-cors 模式下无法读取响应状态，只要没有抛出错误就认为运行中
-      return 'running';
+      // 检查响应状态
+      if (response.ok) {
+        return 'running';
+      } else {
+        return 'stopped';
+      }
     } catch (error: any) {
       // 网络错误或超时，认为服务已停止
       return 'stopped';
