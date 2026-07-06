@@ -1293,3 +1293,66 @@
 .api-response-box code.error {
   color: #f56565;
 }
+
+/* Code Example with Copy Button */
+.code-example-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.code-example-header h4 {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-normal);
+}
+
+.copy-code-btn {
+  padding: 6px 12px;
+  background: var(--interactive-accent);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.copy-code-btn:hover {
+  background: var(--interactive-accent-hover);
+}
+
+.copy-code-btn.copied {
+  background: #49cc90;
+}
+
+.code-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 15px 0 8px 0;
+}
+
+.code-section-header h5 {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.copy-code-btn-small {
+  padding: 4px 10px;
+  background: var(--background-modifier-border);
+  color: var(--text-muted);
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.2s;
+}
+
+.copy-code-btn-small:hover {
+  background: var(--interactive-accent);
+  color: white;
+}

@@ -131,22 +131,16 @@ export class ApiDocModal extends Modal {
     examplesSection.createEl('h3', { text: '使用示例' });
 
     // cURL 示例
-    const curlExample = examplesSection.createDiv({ cls: 'code-example' });
-    curlExample.createEl('h4', { text: 'cURL' });
-    curlExample.createEl('pre').createEl('code', {
-      text: `curl -X POST ${baseUrl}/chat \\
+    const curlCode = `curl -X POST ${baseUrl}/chat \\
   -H "Content-Type: application/json" \\
   -d '{
     "model": "claude-3-5-sonnet-20241022",
     "messages": [{"role": "user", "content": "你好"}]
-  }'`
-    });
+  }'`;
+    this.renderCodeExample(examplesSection, 'cURL', curlCode);
 
     // JavaScript 示例
-    const jsExample = examplesSection.createDiv({ cls: 'code-example' });
-    jsExample.createEl('h4', { text: 'JavaScript' });
-    jsExample.createEl('pre').createEl('code', {
-      text: `const response = await fetch('${baseUrl}/chat', {
+    const jsCode = `const response = await fetch('${baseUrl}/chat', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -155,22 +149,48 @@ export class ApiDocModal extends Modal {
   })
 });
 const data = await response.json();
-console.log(data.choices[0].message.content);`
-    });
+console.log(data.choices[0].message.content);`;
+    this.renderCodeExample(examplesSection, 'JavaScript', jsCode);
 
     // Python 示例
-    const pythonExample = examplesSection.createDiv({ cls: 'code-example' });
-    pythonExample.createEl('h4', { text: 'Python' });
-    pythonExample.createEl('pre').createEl('code', {
-      text: `import requests
+    const pythonCode = `import requests
 
 response = requests.post('${baseUrl}/chat', json={
     'model': 'claude-3-5-sonnet-20241022',
     'messages': [{'role': 'user', 'content': '你好'}]
 })
 data = response.json()
-print(data['choices'][0]['message']['content'])`
+print(data['choices'][0]['message']['content'])`;
+    this.renderCodeExample(examplesSection, 'Python', pythonCode);
+  }
+
+  private renderCodeExample(container: HTMLElement, title: string, code: string): void {
+    const example = container.createDiv({ cls: 'code-example' });
+
+    const header = example.createDiv({ cls: 'code-example-header' });
+    header.createEl('h4', { text: title });
+
+    const copyBtn = header.createEl('button', {
+      text: '📋 复制',
+      cls: 'copy-code-btn'
     });
+
+    const pre = example.createEl('pre');
+    pre.createEl('code', { text: code });
+
+    copyBtn.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(code);
+        copyBtn.setText('✅ 已复制');
+        copyBtn.addClass('copied');
+        setTimeout(() => {
+          copyBtn.setText('📋 复制');
+          copyBtn.removeClass('copied');
+        }, 2000);
+      } catch (error) {
+        new Notice('❌ 复制失败');
+      }
+    };
   }
 
   private renderEndpoint(container: HTMLElement, config: any): void {
@@ -186,18 +206,54 @@ print(data['choices'][0]['message']['content'])`
 
     // 请求示例
     if (config.request) {
-      endpoint.createEl('h5', { text: '请求' });
-      endpoint.createEl('pre').createEl('code', {
-        text: JSON.stringify(config.request, null, 2)
+      const requestHeader = endpoint.createDiv({ cls: 'code-section-header' });
+      requestHeader.createEl('h5', { text: '请求' });
+
+      const requestText = JSON.stringify(config.request, null, 2);
+      const requestCopyBtn = requestHeader.createEl('button', {
+        text: '📋 复制',
+        cls: 'copy-code-btn-small'
       });
+
+      const requestPre = endpoint.createEl('pre');
+      requestPre.createEl('code', { text: requestText });
+
+      requestCopyBtn.onclick = async () => {
+        try {
+          await navigator.clipboard.writeText(requestText);
+          requestCopyBtn.setText('✅');
+          setTimeout(() => requestCopyBtn.setText('📋 复制'), 2000);
+        } catch (error) {
+          new Notice('❌ 复制失败');
+        }
+      };
     }
 
     // 响应示例
-    endpoint.createEl('h5', { text: '响应' });
+    const responseHeader = endpoint.createDiv({ cls: 'code-section-header' });
+    responseHeader.createEl('h5', { text: '响应' });
+
     const responseText = typeof config.response === 'string'
       ? config.response
       : JSON.stringify(config.response, null, 2);
-    endpoint.createEl('pre').createEl('code', { text: responseText });
+
+    const responseCopyBtn = responseHeader.createEl('button', {
+      text: '📋 复制',
+      cls: 'copy-code-btn-small'
+    });
+
+    const responsePre = endpoint.createEl('pre');
+    responsePre.createEl('code', { text: responseText });
+
+    responseCopyBtn.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(responseText);
+        responseCopyBtn.setText('✅');
+        setTimeout(() => responseCopyBtn.setText('📋 复制'), 2000);
+      } catch (error) {
+        new Notice('❌ 复制失败');
+      }
+    };
   }
 
   private renderTestTool(container: HTMLElement): void {
