@@ -62,6 +62,9 @@ export class ModelRunnerView extends ItemView {
       await this.plugin.stopServer();
       setTimeout(() => this.plugin.startServer(), 1000);
     };
+
+    const apiBtn = btnRow.createEl('button', { text: '📡 API' });
+    apiBtn.onclick = () => this.showApiModal();
   }
 
   private renderConfig(container: HTMLElement): void {
@@ -245,6 +248,11 @@ export class ModelRunnerView extends ItemView {
   clearLogs(): void {
     this.logContainer.empty();
     this.appendLog('日志已清空', 'INFO');
+  }
+
+  private showApiModal(): void {
+    const { ApiDocModal } = require('./ApiDocModal');
+    new ApiDocModal(this.app, this.plugin).open();
   }
 
   async onClose(): Promise<void> {

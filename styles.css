@@ -1068,3 +1068,228 @@
   padding: 8px 16px;
 }
 
+
+/* API Documentation Modal */
+.api-doc-modal .modal {
+  max-width: 900px;
+  width: 90%;
+}
+
+.api-doc-modal h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--background-modifier-border);
+  padding-bottom: 10px;
+}
+
+.api-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.api-tab {
+  padding: 10px 20px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-muted);
+  transition: all 0.2s;
+}
+
+.api-tab:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+
+.api-tab.active {
+  color: var(--text-accent);
+  border-bottom-color: var(--text-accent);
+}
+
+.api-content {
+  max-height: 600px;
+  overflow-y: auto;
+  padding: 10px 0;
+}
+
+.api-section {
+  margin-bottom: 30px;
+}
+
+.api-section h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: var(--text-accent);
+}
+
+.api-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.api-table td {
+  padding: 8px 12px;
+  border: 1px solid var(--background-modifier-border);
+}
+
+.api-table code {
+  background: var(--background-secondary);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+.api-endpoint {
+  margin-bottom: 30px;
+  padding: 15px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-secondary);
+}
+
+.endpoint-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.method-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  color: white;
+}
+
+.method-post {
+  background: #49cc90;
+}
+
+.method-get {
+  background: #61affe;
+}
+
+.endpoint-path {
+  font-size: 14px;
+  font-family: monospace;
+  color: var(--text-accent);
+}
+
+.endpoint-description {
+  margin: 10px 0;
+  color: var(--text-muted);
+}
+
+.api-endpoint h5 {
+  margin: 15px 0 8px 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.api-endpoint pre {
+  background: var(--background-primary);
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.api-endpoint code {
+  font-size: 12px;
+  line-height: 1.5;
+  font-family: 'Courier New', monospace;
+}
+
+.code-example {
+  margin-bottom: 25px;
+}
+
+.code-example h4 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  color: var(--text-normal);
+}
+
+.code-example pre {
+  background: var(--background-primary);
+  padding: 15px;
+  border-radius: 6px;
+  border-left: 4px solid var(--text-accent);
+  overflow-x: auto;
+}
+
+.code-example code {
+  font-size: 13px;
+  line-height: 1.6;
+  font-family: 'Courier New', monospace;
+}
+
+/* API Test Tool */
+.api-test-select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 14px;
+}
+
+.api-test-params h4,
+.api-test-response h4 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.api-test-textarea {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  resize: vertical;
+}
+
+.api-test-button {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 20px;
+}
+
+.api-response-box {
+  background: var(--background-primary);
+  padding: 15px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.api-response-box code {
+  font-size: 12px;
+  line-height: 1.6;
+  font-family: 'Courier New', monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.api-response-box code.success {
+  color: #49cc90;
+}
+
+.api-response-box code.error {
+  color: #f56565;
+}
